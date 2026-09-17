@@ -1,20 +1,8 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="no-focus-ring">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="Último Trem — jogo narrativo de mistério em estações ferroviárias.">
-    <meta name="theme-color" content="#090b12">
-
-    <!-- Favicons e PWA -->
-    <link rel="icon" href="favicon.ico">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="apple-touch-icon" href="icon-192x192.png">
-    <link rel="manifest" href="manifest.json">
-
-    <!-- Fonte monoespaçada com boa legibilidade -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Último Trem</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -22,255 +10,312 @@
 <body>
 
     <!-- ================= MENU ================= -->
-    <div id="menuScreen" class="screen active" tabindex="-1">
-        <div class="menu-box">
 
-            <div class="train-symbol" aria-hidden="true">🚇</div>
+    <div id="menuScreen" class="screen active">
+        <div class="menu-box">
+            <div class="train-symbol">🚇</div>
+
             <h1>ÚLTIMO TREM</h1>
             <p class="subtitle">Toda estação guarda um segredo.</p>
 
-            <button id="newGameBtn" aria-label="Iniciar nova jornada">
-                NOVA JORNADA
-            </button>
-            <button id="continueBtn" aria-label="Continuar último save" disabled>
-                CONTINUAR
-            </button>
-            <button id="deleteSaveBtn" class="danger" aria-label="Apagar progresso salvo">
-                APAGAR SAVE
-            </button>
+            <button id="newGameBtn">NOVA JORNADA</button>
+            <button id="continueBtn">CONTINUAR</button>
+            <button id="deleteSaveBtn" class="danger">APAGAR SAVE</button>
 
-            <p class="version">v1.1 — Projeto Último Trem</p>
+            <p class="version">v1.0 — Projeto Último Trem</p>
         </div>
     </div>
 
+
     <!-- ================= JOGO ================= -->
+
     <div id="gameScreen" class="screen">
 
         <header class="topbar">
 
             <div class="game-title">
-                <span aria-hidden="true">🚇</span>
-                <strong><span class="sr-only">Último Trem</span></strong>
+                <span>🚇</span>
+                <strong>ÚLTIMO TREM</strong>
             </div>
 
-            <div class="location-name" id="locationName" aria-live="polite">
+            <div class="location-name" id="locationName">
                 Estação Central
             </div>
 
             <div class="top-actions">
-                <button id="inventoryBtn" aria-label="Abrir inventário">
-                    🎒<span class="sr-only">Inventário</span>
-                </button>
-                <button id="missionsBtn" aria-label="Ver missões">
-                    📜<span class="sr-only">Missões</span>
-                </button>
-                <button id="saveBtn" aria-label="Salvar jogo">
-                    💾<span class="sr-only">Salvar</span>
-                </button>
-                <button id="menuBtn" aria-label="Abrir menu">
-                    ☰<span class="sr-only">Menu</span>
-                </button>
+                <button id="inventoryBtn">🎒</button>
+                <button id="missionsBtn">📜</button>
+                <button id="saveBtn">💾</button>
+                <button id="menuBtn">☰</button>
             </div>
 
         </header>
 
+
         <main class="game-layout">
 
             <!-- ================= CANVAS ================= -->
-            <section class="game-area">
-                <canvas id="gameCanvas" width="960" height="540" role="img" aria-label="Área de jogo — cenário da estação"></canvas>
 
-                <div id="interactionHint" class="interaction-hint" role="alert">
-                    Pressione <kbd>E</kbd> para interagir
+            <section class="game-area">
+
+                <canvas id="gameCanvas" width="960" height="540"></canvas>
+
+                <div id="interactionHint" class="interaction-hint">
+                    Pressione E para interagir
                 </div>
 
-                <!-- Controles mobile melhorados -->
                 <div id="mobileControls">
+
                     <div class="dpad">
-                        <button data-key="ArrowUp" aria-label="Mover para cima">▲</button>
+
+                        <button data-key="ArrowUp">▲</button>
+
                         <div>
-                            <button data-key="ArrowLeft" aria-label="Mover para esquerda">◀</button>
-                            <button data-key="ArrowDown" aria-label="Mover para baixo">▼</button>
-                            <button data-key="ArrowRight" aria-label="Mover para direita">▶</button>
+                            <button data-key="ArrowLeft">◀</button>
+                            <button data-key="ArrowDown">▼</button>
+                            <button data-key="ArrowRight">▶</button>
                         </div>
+
                     </div>
-                    <button id="mobileInteract" class="interact-button" aria-label="Interagir">
+
+                    <button id="mobileInteract" class="interact-button">
                         E
                     </button>
+
                 </div>
 
             </section>
 
+
             <!-- ================= PAINEL ================= -->
-            <aside class="side-panel" aria-label="Painel do jogador">
+
+            <aside class="side-panel">
+
                 <div class="player-card">
-                    <div class="player-avatar" aria-hidden="true">
+
+                    <div class="player-avatar">
                         <div class="avatar-head"></div>
                         <div class="avatar-body"></div>
                     </div>
+
                     <div>
                         <h2 id="playerName">Alex</h2>
-                        <div class="level">Nível <span id="level">1</span></div>
-                        <div class="xp-bar" aria-label="Barra de experiência">
+
+                        <div class="level">
+                            Nível <span id="level">1</span>
+                        </div>
+
+                        <div class="xp-bar">
                             <div id="xpBar"></div>
                         </div>
                     </div>
+
                 </div>
 
+
                 <div class="stats">
+
                     <div class="stat">
-                        <span aria-hidden="true">❤️</span>
+                        <span>❤️</span>
                         <strong id="lives">3</strong>
                         <small>VIDAS</small>
                     </div>
+
                     <div class="stat">
-                        <span aria-hidden="true">⚡</span>
+                        <span>⚡</span>
                         <strong id="energy">100</strong>
                         <small>ENERGIA</small>
                     </div>
+
                     <div class="stat">
-                        <span aria-hidden="true">🪙</span>
+                        <span>🪙</span>
                         <strong id="coins">20</strong>
                         <small>MOEDAS</small>
                     </div>
+
                     <div class="stat">
-                        <span aria-hidden="true">🔎</span>
+                        <span>🔎</span>
                         <strong id="clues">0</strong>
                         <small>PISTAS</small>
                     </div>
+
                 </div>
 
+
                 <div class="mission-mini">
-                    <div class="panel-title">MISSÃO ATUAL</div>
-                    <h3 id="currentMission">Descubra onde você está.</h3>
+
+                    <div class="panel-title">
+                        MISSÃO ATUAL
+                    </div>
+
+                    <h3 id="currentMission">
+                        Descubra onde você está.
+                    </h3>
+
                     <p id="missionDescription">
                         Explore a Estação Central e encontre alguma pista sobre o desaparecimento dos passageiros.
                     </p>
+
                 </div>
+
 
                 <div class="controls-info">
+
                     <strong>CONTROLES</strong>
-                    <p><kbd>WASD</kbd> / <kbd>Setas</kbd> — mover</p>
-                    <p><kbd>E</kbd> — interagir</p>
-                    <p><kbd>ESC</kbd> — fechar janela</p>
+
+                    <p>WASD / Setas — mover</p>
+                    <p>E — interagir</p>
+                    <p>ESC — fechar janela</p>
+
                 </div>
+
             </aside>
+
         </main>
+
     </div>
 
-    <!-- ================= MODAIS (inventário, missões, diálogo, puzzle, final) ================= -->
-    <!-- (mantive a estrutura original — veja comentários abaixo sobre acessibilidade) -->
 
-    <!-- Inventário -->
-    <div id="inventoryModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="inventoryTitle">
+    <!-- ================= INVENTÁRIO ================= -->
+
+    <div id="inventoryModal" class="modal">
+
         <div class="modal-box">
-            <button class="close-modal" aria-label="Fechar">×</button>
-            <h2 id="inventoryTitle"><span class="sr-only">🎒 </span>Inventário</h2>
+
+            <button class="close-modal">×</button>
+
+            <h2>🎒 Inventário</h2>
+
             <div id="inventoryList" class="inventory-grid"></div>
+
         </div>
+
     </div>
 
-    <!-- Missões -->
-    <div id="missionsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="missionsTitle">
+
+    <!-- ================= MISSÕES ================= -->
+
+    <div id="missionsModal" class="modal">
+
         <div class="modal-box">
-            <button class="close-modal" aria-label="Fechar">×</button>
-            <h2 id="missionsTitle"><span class="sr-only">📜 </span>Missões</h2>
+
+            <button class="close-modal">×</button>
+
+            <h2>📜 Missões</h2>
+
             <div id="missionsList"></div>
+
         </div>
+
     </div>
 
-    <!-- Diálogo -->
-    <div id="dialogueModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="dialogueName">
+
+    <!-- ================= DIÁLOGO ================= -->
+
+    <div id="dialogueModal" class="modal">
+
         <div class="dialogue-box">
-            <div class="dialogue-character" aria-hidden="true">
+
+            <div class="dialogue-character">
                 <div id="dialogueAvatar"></div>
             </div>
+
             <div class="dialogue-content">
+
                 <h2 id="dialogueName">Desconhecido</h2>
+
                 <p id="dialogueText"></p>
+
                 <div id="dialogueChoices"></div>
-                <button id="dialogueContinue">CONTINUAR</button>
+
+                <button id="dialogueContinue">
+                    CONTINUAR
+                </button>
+
             </div>
+
         </div>
+
     </div>
 
-    <!-- Puzzle -->
-    <div id="puzzleModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="puzzleTitle">
+
+    <!-- ================= PUZZLE ================= -->
+
+    <div id="puzzleModal" class="modal">
+
         <div class="modal-box puzzle-box">
-            <button class="close-modal" aria-label="Fechar">×</button>
-            <h2 id="puzzleTitle"><span class="sr-only">🔐 </span>Terminal de Segurança</h2>
-            <p>O terminal pede um código de quatro dígitos.</p>
-            <div id="puzzleDisplay" aria-live="polite">----</div>
-            <div class="keypad">
-                <!-- Números 1-9, 0, clear, enter com aria-labels -->
-                <button data-number="1" aria-label="Número 1">1</button>
-                <button data-number="2" aria-label="Número 2">2</button>
-                <button data-number="3" aria-label="Número 3">3</button>
-                <button data-number="4" aria-label="Número 4">4</button>
-                <button data-number="5" aria-label="Número 5">5</button>
-                <button data-number="6" aria-label="Número 6">6</button>
-                <button data-number="7" aria-label="Número 7">7</button>
-                <button data-number="8" aria-label="Número 8">8</button>
-                <button data-number="9" aria-label="Número 9">9</button>
-                <button data-number="clear" aria-label="Apagar">C</button>
-                <button data-number="0" aria-label="Número 0">0</button>
-                <button data-number="enter" aria-label="Confirmar">✓</button>
+
+            <button class="close-modal">×</button>
+
+            <h2>🔐 Terminal de Segurança</h2>
+
+            <p>
+                O terminal pede um código de quatro dígitos.
+            </p>
+
+            <div id="puzzleDisplay">
+                ----
             </div>
+
+            <div class="keypad">
+
+                <button data-number="1">1</button>
+                <button data-number="2">2</button>
+                <button data-number="3">3</button>
+
+                <button data-number="4">4</button>
+                <button data-number="5">5</button>
+                <button data-number="6">6</button>
+
+                <button data-number="7">7</button>
+                <button data-number="8">8</button>
+                <button data-number="9">9</button>
+
+                <button data-number="clear">C</button>
+                <button data-number="0">0</button>
+                <button data-number="enter">✓</button>
+
+            </div>
+
         </div>
+
     </div>
 
-    <!-- Final -->
-    <div id="endingModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="endingTitle">
+
+    <!-- ================= FINAL ================= -->
+
+    <div id="endingModal" class="modal">
+
         <div class="ending-box">
-            <div id="endingIcon" aria-hidden="true">🚇</div>
-            <h1 id="endingTitle">FIM</h1>
+
+            <div id="endingIcon">🚇</div>
+
+            <h1 id="endingTitle">
+                FIM
+            </h1>
+
             <p id="endingText"></p>
+
             <div id="endingStats"></div>
-            <button id="restartBtn">JOGAR NOVAMENTE</button>
+
+            <button id="restartBtn">
+                JOGAR NOVAMENTE
+            </button>
+
         </div>
+
     </div>
+
 
     <!-- ================= NOTIFICAÇÃO ================= -->
-    <div id="notification" role="status" aria-live="polite">
-        <span id="notificationIcon" aria-hidden="true">!</span>
+
+    <div id="notification">
+        <span id="notificationIcon">!</span>
         <span id="notificationText"></span>
     </div>
 
-    <!-- ================= VISUALLY HIDDEN (acessibilidade) ================= -->
-    <style>
-    .sr-only {
-        position: absolute;
-        width: 1px; height: 1px;
-        padding: 0; margin: -1px;
-        overflow: hidden; clip: rect(0,0,0,0);
-        border: 0;
-    }
-    /* Remove outline em foco programático (quando o usuário usa mouse) */
-    .no-focus-ring:focus { outline: none !important; }
-    .no-focus-ring:focus-visible { outline: 2px solid var(--accent) !important; outline-offset: 2px; }
-    </style>
 
-    <!-- JS: inclua seu script principal aqui -->
-    <!-- <script src="script.js"></script> -->
-
-    <!--
-    JS: PONTOS DE ATENÇÃO NA SUBSTITUIÇÃO:
-    1. O botão #continueBtn agora nasce disabled. No carregamento, seu JS deve:
-         document.getElementById('continueBtn').disabled = !temSaveNoLocalStorage();
-       (habilitar só se houver save)
-
-    2. Todos os botões com ícone agora têm aria-label e <span class="sr-only"> para leitores de tela.
-
-    3. Os modais agora têm role="dialog" e aria-modal="true" para acessibilidade.
-
-    4. O .sr-only e os estilos de focus estão inline no <head> — se preferir, mova para o CSS.
-
-    5. O canvas tem role="img" e aria-label para descrever a área de jogo.
-
-    6. Os controles mobile foram ampliados — seu JS de eventos touch deve continuar funcionando.
-
-    7. Favicons/PWA: crie favicon.ico, favicon.svg, icon-192x192.png e manifest.json na raiz.
-    -->
+    <script src="script.js"></script>
 
 </body>
 </html>
