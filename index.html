@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Último Trem</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- ================= MENU ================= -->
+
+    <div id="menuScreen" class="screen active">
+        <div class="menu-box">
+            <div class="train-symbol">🚇</div>
+
+            <h1>ÚLTIMO TREM</h1>
+            <p class="subtitle">Toda estação guarda um segredo.</p>
+
+            <button id="newGameBtn">NOVA JORNADA</button>
+            <button id="continueBtn">CONTINUAR</button>
+            <button id="deleteSaveBtn" class="danger">APAGAR SAVE</button>
+
+            <p class="version">v1.0 — Projeto Último Trem</p>
+        </div>
+    </div>
+
+
+    <!-- ================= JOGO ================= -->
+
+    <div id="gameScreen" class="screen">
+
+        <header class="topbar">
+
+            <div class="game-title">
+                <span>🚇</span>
+                <strong>ÚLTIMO TREM</strong>
+            </div>
+
+            <div class="location-name" id="locationName">
+                Estação Central
+            </div>
+
+            <div class="top-actions">
+                <button id="inventoryBtn">🎒</button>
+                <button id="missionsBtn">📜</button>
+                <button id="saveBtn">💾</button>
+                <button id="menuBtn">☰</button>
+            </div>
+
+        </header>
+
+
+        <main class="game-layout">
+
+            <!-- ================= CANVAS ================= -->
+
+            <section class="game-area">
+
+                <canvas id="gameCanvas" width="960" height="540"></canvas>
+
+                <div id="interactionHint" class="interaction-hint">
+                    Pressione E para interagir
+                </div>
+
+                <div id="mobileControls">
+
+                    <div class="dpad">
+
+                        <button data-key="ArrowUp">▲</button>
+
+                        <div>
+                            <button data-key="ArrowLeft">◀</button>
+                            <button data-key="ArrowDown">▼</button>
+                            <button data-key="ArrowRight">▶</button>
+                        </div>
+
+                    </div>
+
+                    <button id="mobileInteract" class="interact-button">
+                        E
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <!-- ================= PAINEL ================= -->
+
+            <aside class="side-panel">
+
+                <div class="player-card">
+
+                    <div class="player-avatar">
+                        <div class="avatar-head"></div>
+                        <div class="avatar-body"></div>
+                    </div>
+
+                    <div>
+                        <h2 id="playerName">Alex</h2>
+
+                        <div class="level">
+                            Nível <span id="level">1</span>
+                        </div>
+
+                        <div class="xp-bar">
+                            <div id="xpBar"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div class="stats">
+
+                    <div class="stat">
+                        <span>❤️</span>
+                        <strong id="lives">3</strong>
+                        <small>VIDAS</small>
+                    </div>
+
+                    <div class="stat">
+                        <span>⚡</span>
+                        <strong id="energy">100</strong>
+                        <small>ENERGIA</small>
+                    </div>
+
+                    <div class="stat">
+                        <span>🪙</span>
+                        <strong id="coins">20</strong>
+                        <small>MOEDAS</small>
+                    </div>
+
+                    <div class="stat">
+                        <span>🔎</span>
+                        <strong id="clues">0</strong>
+                        <small>PISTAS</small>
+                    </div>
+
+                </div>
+
+
+                <div class="mission-mini">
+
+                    <div class="panel-title">
+                        MISSÃO ATUAL
+                    </div>
+
+                    <h3 id="currentMission">
+                        Descubra onde você está.
+                    </h3>
+
+                    <p id="missionDescription">
+                        Explore a Estação Central e encontre alguma pista sobre o desaparecimento dos passageiros.
+                    </p>
+
+                </div>
+
+
+                <div class="controls-info">
+
+                    <strong>CONTROLES</strong>
+
+                    <p>WASD / Setas — mover</p>
+                    <p>E — interagir</p>
+                    <p>ESC — fechar janela</p>
+
+                </div>
+
+            </aside>
+
+        </main>
+
+    </div>
+
+
+    <!-- ================= INVENTÁRIO ================= -->
+
+    <div id="inventoryModal" class="modal">
+
+        <div class="modal-box">
+
+            <button class="close-modal">×</button>
+
+            <h2>🎒 Inventário</h2>
+
+            <div id="inventoryList" class="inventory-grid"></div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= MISSÕES ================= -->
+
+    <div id="missionsModal" class="modal">
+
+        <div class="modal-box">
+
+            <button class="close-modal">×</button>
+
+            <h2>📜 Missões</h2>
+
+            <div id="missionsList"></div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= DIÁLOGO ================= -->
+
+    <div id="dialogueModal" class="modal">
+
+        <div class="dialogue-box">
+
+            <div class="dialogue-character">
+                <div id="dialogueAvatar"></div>
+            </div>
+
+            <div class="dialogue-content">
+
+                <h2 id="dialogueName">Desconhecido</h2>
+
+                <p id="dialogueText"></p>
+
+                <div id="dialogueChoices"></div>
+
+                <button id="dialogueContinue">
+                    CONTINUAR
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= PUZZLE ================= -->
+
+    <div id="puzzleModal" class="modal">
+
+        <div class="modal-box puzzle-box">
+
+            <button class="close-modal">×</button>
+
+            <h2>🔐 Terminal de Segurança</h2>
+
+            <p>
+                O terminal pede um código de quatro dígitos.
+            </p>
+
+            <div id="puzzleDisplay">
+                ----
+            </div>
+
+            <div class="keypad">
+
+                <button data-number="1">1</button>
+                <button data-number="2">2</button>
+                <button data-number="3">3</button>
+
+                <button data-number="4">4</button>
+                <button data-number="5">5</button>
+                <button data-number="6">6</button>
+
+                <button data-number="7">7</button>
+                <button data-number="8">8</button>
+                <button data-number="9">9</button>
+
+                <button data-number="clear">C</button>
+                <button data-number="0">0</button>
+                <button data-number="enter">✓</button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= FINAL ================= -->
+
+    <div id="endingModal" class="modal">
+
+        <div class="ending-box">
+
+            <div id="endingIcon">🚇</div>
+
+            <h1 id="endingTitle">
+                FIM
+            </h1>
+
+            <p id="endingText"></p>
+
+            <div id="endingStats"></div>
+
+            <button id="restartBtn">
+                JOGAR NOVAMENTE
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= NOTIFICAÇÃO ================= -->
+
+    <div id="notification">
+        <span id="notificationIcon">!</span>
+        <span id="notificationText"></span>
+    </div>
+
+
+    <script src="script.js"></script>
+
+</body>
+</html>
