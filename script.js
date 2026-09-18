@@ -1,290 +1,1320 @@
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
+import { PointerLockControls } from "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/controls/PointerLockControls.js";
+
+
+// ============================================================
 // ESTADO DO JOGO
-const state = {
-  player: { name: "Yuri", level: 1, xp: 0, energy: 100, coins: 5 },
-  location: "estacao",
-  timeMinutes: 1425, // 23:45
-  inventory: [],
-  clues: [],
-  mission: "Explore a estação e descubra por que ela está abandonada.",
-  flags: { trainArrived: false }
+// ============================================================
+
+const gameState = {
+
+    player: {
+        lives: 3,
+        energy: 100,
+        x: 0,
+        y: 1.7,
+        z: 12
+    },
+
+    inventory: [],
+
+    clues: 0,
+
+    mission:
+        "Descubra onde você está.",
+
+    flags: {
+        metOlivia: false,
+        foundTicket: false,
+        inspectedClock: false,
+        flashlight: false,
+        trainSeen: false
+    }
+
 };
 
-// LOCAIS DO MAPA
-const LOCATIONS = {
-  estacao: {
-    title: "ESTAÇÃO CENTRAL",
-    bg: "#11111e",
-    elements: [
-      { name: "Olivia", top: "50%", left: "15%", width: "80px", height: "80px", color: "#4a3b52", action: () => talkOlivia() },
-      { name: "O Condutor", top: "50%", left: "75%", width: "80px", height: "80px", color: "#2d4a3e", action: () => talkCondutor() },
-      { name: "Relógio", top: "15%", left: "45%", width: "90px", height: "40px", color: "#3a3a22", action: () => alert("Relógio marca: " + formatTime(state.timeMinutes)) },
-      { name: "Bilhete", top: "75%", left: "40%", width: "50px", height: "30px", color: "#5a5a3a", action: () => getItem("Bilhete Antigo", "Documento cita linha experimental.") }
-    ]
-  },
-  centro: {
-    title: "CENTRO ABANDONADO",
-    bg: "#1a1a24",
-    elements: [
-      { name: "Vendedor", top: "45%", left: "20%", width: "80px", height: "80px", color: "#3d3222", action: () => talkVendedor() },
-      { name: "Homem da Praça", top: "50%", left: "60%", width: "80px", height: "80px", color: "#22333d", action: () => talkHomemPraca() }
-    ]
-  },
-  chuva: {
-    title: "DISTRITO DA CHUVA",
-    bg: "#08101e",
-    elements: [
-      { name: "Poste de Luz", top: "30%", left: "30%", width: "40px", height: "100px", color: "#1e3344", action: () => getItem("Bilhete Vermelho", "Aviso sobre o perigo do trem.") }
-    ]
-  },
-  parque: {
-    title: "PARQUE DAS LANTERNAS",
-    bg: "#0b1c10",
-    elements: [
-      { name: "Lago", top: "60%", left: "40%", width: "120px", height: "60px", color: "#143324", action: () => getItem("Moeda Estranha", "Moeda com gravuras antigas.") }
-    ]
-  },
-  hospital: {
-    title: "HOSPITAL SÃO LUCAS",
-    bg: "#0d1818",
-    elements: [
-      { name: "Kaio", top: "45%", left: "30%", width: "80px", height: "80px", color: "#2e4854", action: () => talkKaio() },
-      { name: "Terminal PC", top: "40%", left: "65%", width: "70px", height: "60px", color: "#1c382b", action: () => useTerminal() }
-    ]
-  },
-  cidade: {
-    title: "CIDADE ANTIGA",
-    bg: "#21160e",
-    elements: [
-      { name: "Senhora da Cidade", top: "50%", left: "50%", width: "80px", height: "80px", color: "#473021", action: () => talkSenhora() }
-    ]
-  },
-  tuneis: {
-    title: "TÚNEIS SUBTERRÂNEOS",
-    bg: "#080808",
-    elements: [
-      { name: "Porta Trancada", top: "40%", left: "45%", width: "90px", height: "100px", color: "#2b2b2b", action: () => enterSala0() }
-    ]
-  },
-  sala0: {
-    title: "SALA 0",
-    bg: "#1a0505",
-    elements: [
-      { name: "Máquina Central", top: "35%", left: "40%", width: "120px", height: "100px", color: "#541e1e", action: () => triggerEnding() }
-    ]
-  }
-};
 
-function init() {
-  renderScene();
-  updateHUD();
-  setInterval(() => {
-    state.timeMinutes = (state.timeMinutes + 1) % 1440;
-    if (state.timeMinutes === 0) {
-      state.flags.trainArrived = true;
-      alert("00:00 - O Último Trem chegou à plataforma.");
+// ============================================================
+// CENA
+// ============================================================
+
+const scene = new THREE.Scene();
+
+scene.background = new THREE.Color(0x050509);
+
+scene.fog = new THREE.FogExp2(
+    0x050509,
+    0.035
+);
+
+
+// ============================================================
+// CÂMERA
+// ============================================================
+
+const camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    200
+);
+
+camera.position.set(
+    gameState.player.x,
+    gameState.player.y,
+    gameState.player.z
+);
+
+
+// ============================================================
+// RENDERER
+// ============================================================
+
+const renderer = new THREE.WebGLRenderer({
+    antialias: true
+});
+
+renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+);
+
+renderer.setPixelRatio(
+    Math.min(window.devicePixelRatio, 2)
+);
+
+renderer.shadowMap.enabled = true;
+
+renderer.shadowMap.type =
+    THREE.PCFSoftShadowMap;
+
+document
+    .getElementById("game")
+    .prepend(renderer.domElement);
+
+
+// ============================================================
+// CONTROLES
+// ============================================================
+
+const controls =
+    new PointerLockControls(
+        camera,
+        renderer.domElement
+    );
+
+renderer.domElement.addEventListener(
+    "click",
+    () => {
+
+        if (
+            !gameState.dialogueOpen &&
+            !gameState.inventoryOpen
+        ) {
+            controls.lock();
+        }
+
     }
-    updateHUD();
-  }, 3000);
+);
+
+
+// ============================================================
+// LUZES
+// ============================================================
+
+const ambientLight =
+    new THREE.HemisphereLight(
+        0x777788,
+        0x080808,
+        0.55
+    );
+
+scene.add(ambientLight);
+
+
+const moonLight =
+    new THREE.DirectionalLight(
+        0xaaaaff,
+        0.35
+    );
+
+moonLight.position.set(
+    20,
+    30,
+    10
+);
+
+moonLight.castShadow = true;
+
+scene.add(moonLight);
+
+
+// ============================================================
+// MATERIAIS
+// ============================================================
+
+const floorMaterial =
+    new THREE.MeshStandardMaterial({
+        color: 0x292930,
+        roughness: 0.85
+    });
+
+const wallMaterial =
+    new THREE.MeshStandardMaterial({
+        color: 0x17171e,
+        roughness: 0.9
+    });
+
+const metalMaterial =
+    new THREE.MeshStandardMaterial({
+        color: 0x55555d,
+        metalness: 0.7,
+        roughness: 0.4
+    });
+
+const yellowMaterial =
+    new THREE.MeshStandardMaterial({
+        color: 0xb5a23a,
+        roughness: 0.6
+    });
+
+
+// ============================================================
+// FUNÇÃO PARA CRIAR CUBOS
+// ============================================================
+
+function createBox(
+    width,
+    height,
+    depth,
+    material,
+    x,
+    y,
+    z
+) {
+
+    const geometry =
+        new THREE.BoxGeometry(
+            width,
+            height,
+            depth
+        );
+
+    const mesh =
+        new THREE.Mesh(
+            geometry,
+            material
+        );
+
+    mesh.position.set(
+        x,
+        y,
+        z
+    );
+
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+
+    scene.add(mesh);
+
+    return mesh;
 }
 
-function formatTime(m) {
-  return `${Math.floor(m / 60).toString().padStart(2, '0')}:${(m % 60).toString().padStart(2, '0')}`;
+
+// ============================================================
+// CHÃO DA ESTAÇÃO
+// ============================================================
+
+createBox(
+    70,
+    0.4,
+    45,
+    floorMaterial,
+    0,
+    -0.2,
+    0
+);
+
+
+// ============================================================
+// PAREDES
+// ============================================================
+
+createBox(
+    70,
+    8,
+    1,
+    wallMaterial,
+    0,
+    4,
+    -22
+);
+
+createBox(
+    70,
+    8,
+    1,
+    wallMaterial,
+    0,
+    4,
+    22
+);
+
+createBox(
+    1,
+    8,
+    45,
+    wallMaterial,
+    -35,
+    4,
+    0
+);
+
+createBox(
+    1,
+    8,
+    45,
+    wallMaterial,
+    35,
+    4,
+    0
+);
+
+
+// ============================================================
+// COLUNAS
+// ============================================================
+
+for (let x = -30; x <= 30; x += 10) {
+
+    createBox(
+        1.2,
+        7,
+        1.2,
+        wallMaterial,
+        x,
+        3.5,
+        -5
+    );
+
+    createBox(
+        1.2,
+        7,
+        1.2,
+        wallMaterial,
+        x,
+        3.5,
+        15
+    );
+
 }
 
-function updateHUD() {
-  document.getElementById("time-display").innerText = formatTime(state.timeMinutes);
-  document.getElementById("loc-display").innerText = LOCATIONS[state.location].title;
-  document.getElementById("p-level").innerText = state.player.level;
-  document.getElementById("p-xp").innerText = state.player.xp;
-  document.getElementById("coins-count").innerText = state.player.coins;
-  document.getElementById("pistas-count").innerText = state.clues.length;
-  document.getElementById("energy-bar").style.width = state.player.energy + "%";
-  document.getElementById("current-mission").innerText = state.mission;
 
-  const invList = document.getElementById("inventory-list");
-  invList.innerHTML = state.inventory.length === 0 ? "<li><i>Vazio</i></li>" : state.inventory.map(i => `<li>• ${i}</li>`).join("");
+// ============================================================
+// PLATAFORMA
+// ============================================================
+
+createBox(
+    70,
+    0.8,
+    6,
+    metalMaterial,
+    0,
+    0.25,
+    -8
+);
+
+
+// ============================================================
+// TRILHOS
+// ============================================================
+
+function createRail(x) {
+
+    createBox(
+        70,
+        0.15,
+        0.18,
+        metalMaterial,
+        x,
+        0.75,
+        -8
+    );
+
 }
 
-function renderScene() {
-  const scene = document.getElementById("scene");
-  scene.innerHTML = "";
-  const loc = LOCATIONS[state.location];
-  scene.style.backgroundColor = loc.bg;
+createRail(-1.4);
+createRail(1.4);
 
-  loc.elements.forEach(el => {
-    const btn = document.createElement("div");
-    btn.className = "interactable";
-    btn.style.top = el.top;
-    btn.style.left = el.left;
-    btn.style.width = el.width;
-    btn.style.height = el.height;
-    btn.style.backgroundColor = el.color;
-    btn.innerText = el.name;
-    btn.onclick = el.action;
-    scene.appendChild(btn);
-  });
+
+// ============================================================
+// DORMENTES
+// ============================================================
+
+for (
+    let x = -32;
+    x <= 32;
+    x += 2
+) {
+
+    createBox(
+        0.9,
+        0.18,
+        4,
+        wallMaterial,
+        x,
+        0.62,
+        -8
+    );
+
 }
 
-function showDialogue(speaker, text, options) {
-  const box = document.getElementById("dialogue-box");
-  document.getElementById("dialogue-speaker").innerText = speaker;
-  document.getElementById("dialogue-text").innerText = text;
-  const optsContainer = document.getElementById("dialogue-options");
-  optsContainer.innerHTML = "";
 
-  options.forEach(opt => {
-    const btn = document.createElement("button");
-    btn.className = "dialogue-btn";
-    btn.innerText = opt.text;
-    btn.onclick = () => {
-      box.style.display = "none";
-      opt.callback();
-    };
-    optsContainer.appendChild(btn);
-  });
-  box.style.display = "block";
+// ============================================================
+// LUMINÁRIAS
+// ============================================================
+
+function createLamp(x, z) {
+
+    const pole =
+        createBox(
+            0.2,
+            4,
+            0.2,
+            metalMaterial,
+            x,
+            2,
+            z
+        );
+
+    const light =
+        new THREE.PointLight(
+            0xcfcfff,
+            3,
+            10
+        );
+
+    light.position.set(
+        x,
+        4.1,
+        z
+    );
+
+    light.castShadow = true;
+
+    scene.add(light);
+
+    const bulb =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                0.18,
+                12,
+                12
+            ),
+            new THREE.MeshBasicMaterial({
+                color: 0xffffff
+            })
+        );
+
+    bulb.position.copy(light.position);
+
+    scene.add(bulb);
 }
 
-function getItem(itemName, clueText) {
-  if (!state.inventory.includes(itemName)) {
-    state.inventory.push(itemName);
-    addClue(clueText);
-    addXP(20);
-    alert(`Item obtido: ${itemName}`);
-  } else {
-    alert("Nada mais aqui.");
-  }
+
+for (
+    let x = -30;
+    x <= 30;
+    x += 10
+) {
+
+    createLamp(x, 4);
+
 }
 
-function addClue(text) {
-  if (!state.clues.includes(text)) {
-    state.clues.push(text);
-    updateHUD();
-  }
-}
 
-function addXP(val) {
-  state.player.xp += val;
-  if (state.player.xp >= 50) {
-    state.player.level++;
-    state.player.xp = 0;
-  }
-  updateHUD();
-}
+// ============================================================
+// RELÓGIO
+// ============================================================
 
-function talkOlivia() {
-  showDialogue("Olivia", "O relógio não para. Se quiser respostas, tome o trem à meia-noite.", [
-    { text: "Entendido", callback: () => {} }
-  ]);
-}
+const clockGroup =
+    new THREE.Group();
 
-function talkCondutor() {
-  if (!state.flags.trainArrived) {
-    showDialogue("O Condutor", "A questão não é para onde o trem vai. É quando você volta.", [{ text: "Aguardar 00:00", callback: () => {} }]);
-    return;
-  }
+const clockBody =
+    new THREE.Mesh(
+        new THREE.CylinderGeometry(
+            2,
+            2,
+            0.4,
+            32
+        ),
+        new THREE.MeshStandardMaterial({
+            color: 0x111116
+        })
+    );
 
-  const dests = [
-    { text: "Estação Central", loc: "estacao" },
-    { text: "Centro Abandonado", loc: "centro" },
-    { text: "Distrito da Chuva", loc: "chuva" },
-    { text: "Parque das Lanternas", loc: "parque" },
-    { text: "Hospital São Lucas", loc: "hospital" },
-    { text: "Cidade Antiga", loc: "cidade" },
-    { text: "Túneis", loc: "tuneis" }
-  ];
+clockBody.rotation.x =
+    Math.PI / 2;
 
-  const options = dests.map(d => ({
-    text: d.text,
-    callback: () => { state.location = d.loc; renderScene(); updateHUD(); }
-  }));
+clockGroup.add(clockBody);
 
-  showDialogue("O Condutor", "Escolha o seu destino:", options);
-}
+clockGroup.position.set(
+    0,
+    5,
+    -21.4
+);
 
-function talkKaio() {
-  showDialogue("Kaio", "Não lembro quem sou...", [
-    {
-      text: "Entregar Bilhete Antigo",
-      callback: () => {
-        if (state.inventory.includes("Bilhete Antigo")) {
-          getItem("Cartão Hospitalar", "Kaio era o engenheiro do projeto.");
-          getItem("Chave Mestra", "Abre a Sala 0.");
-        } else {
-          alert("Você precisa do Bilhete Antigo.");
-        }
-      }
-    },
-    { text: "Sair", callback: () => {} }
-  ]);
-}
+scene.add(clockGroup);
 
-function talkVendedor() {
-  showDialogue("Vendedor", "Quer comprar informações por 5 moedas?", [
-    {
-      text: "Comprar Pista",
-      callback: () => {
-        if (state.player.coins >= 5) {
-          state.player.coins -= 5;
-          addClue("O Vendedor revelou que a Sala 0 fica após os túneis.");
-        } else {
-          alert("Moedas insuficientes.");
-        }
-      }
-    },
-    { text: "Sair", callback: () => {} }
-  ]);
-}
 
-function talkHomemPraca() {
-  showDialogue("Homem da Praça", "Olhe esta foto antiga...", [
-    { text: "Examinar Foto", callback: () => getItem("Fotografia", "Foto mostra o primeiro trem e Yuri na multidão.") }
-  ]);
-}
+// ============================================================
+// BILHETE
+// ============================================================
 
-function talkSenhora() {
-  showDialogue("Senhora", "Algumas coisas não envelhecem. O trem e este ciclo são um deles.", [
-    { text: "Ouvir história", callback: () => addClue("A Senhora confirma que o tempo está colapsado.") }
-  ]);
-}
+const ticket =
+    new THREE.Mesh(
+        new THREE.BoxGeometry(
+            1.2,
+            0.04,
+            0.6
+        ),
+        new THREE.MeshStandardMaterial({
+            color: 0xd8c18a
+        })
+    );
 
-function useTerminal() {
-  addClue("Terminal revela: Falha no experimento causou o colapso.");
-  alert("Terminal acessado.");
-}
+ticket.position.set(
+    7,
+    0.9,
+    6
+);
 
-function enterSala0() {
-  if (state.inventory.includes("Chave Mestra")) {
-    state.location = "sala0";
-    renderScene();
-    updateHUD();
-  } else {
-    alert("A porta exige a Chave Mestra.");
-  }
-}
+ticket.rotation.y = 0.3;
 
-function triggerEnding() {
-  const totalPistas = state.clues.length;
-  showDialogue("Máquina Central", "Escolha o destino do tempo:", [
-    {
-      text: "Encerrar o Ciclo",
-      callback: () => {
-        if (totalPistas >= 7) {
-          alert("FINAL 1 — A VERDADE: Você desativa o ciclo temporal e acorda no mundo real.");
-        } else {
-          alert("FINAL 4 — PERDIDO: Você desativa a máquina sem entender tudo e fica preso na escuridão.");
-        }
-        location.reload();
-      }
-    },
-    {
-      text: "Aceitar o Trem",
-      callback: () => {
-        alert("FINAL 3 — CICLO: O tempo é reiniciado. Você acorda novamente às 23:45.");
-        location.reload();
-      }
+ticket.userData.interactable = true;
+ticket.userData.type = "ticket";
+
+scene.add(ticket);
+
+
+// ============================================================
+// LANTERNA
+// ============================================================
+
+const flashlight =
+    new THREE.SpotLight(
+        0xffffff,
+        0,
+        35,
+        Math.PI / 7,
+        0.5,
+        1
+    );
+
+flashlight.position.set(
+    0,
+    1.6,
+    0
+);
+
+flashlight.castShadow = true;
+
+camera.add(flashlight);
+
+scene.add(camera);
+
+
+// ============================================================
+// OBJETO PARA OLIVIA
+// ============================================================
+
+const oliviaGroup =
+    new THREE.Group();
+
+const oliviaBody =
+    new THREE.Mesh(
+        new THREE.CylinderGeometry(
+            0.55,
+            0.7,
+            1.8,
+            12
+        ),
+        new THREE.MeshStandardMaterial({
+            color: 0x292033
+        })
+    );
+
+oliviaBody.position.y = 1;
+
+oliviaGroup.add(oliviaBody);
+
+
+const oliviaHead =
+    new THREE.Mesh(
+        new THREE.SphereGeometry(
+            0.45,
+            16,
+            16
+        ),
+        new THREE.MeshStandardMaterial({
+            color: 0xc9967e
+        })
+    );
+
+oliviaHead.position.y = 2.15;
+
+oliviaGroup.add(oliviaHead);
+
+
+oliviaGroup.position.set(
+    -7,
+    0,
+    5
+);
+
+oliviaGroup.userData.interactable = true;
+oliviaGroup.userData.type = "olivia";
+
+scene.add(oliviaGroup);
+
+
+// ============================================================
+// PLACA "ESTAÇÃO CENTRAL"
+// ============================================================
+
+const signCanvas =
+    document.createElement("canvas");
+
+signCanvas.width = 1024;
+signCanvas.height = 256;
+
+const signContext =
+    signCanvas.getContext("2d");
+
+signContext.fillStyle =
+    "#11111a";
+
+signContext.fillRect(
+    0,
+    0,
+    1024,
+    256
+);
+
+signContext.fillStyle =
+    "#d9d9e6";
+
+signContext.font =
+    "bold 90px Arial";
+
+signContext.textAlign =
+    "center";
+
+signContext.fillText(
+    "ESTAÇÃO CENTRAL",
+    512,
+    155
+);
+
+const signTexture =
+    new THREE.CanvasTexture(
+        signCanvas
+    );
+
+const sign =
+    new THREE.Mesh(
+        new THREE.PlaneGeometry(
+            16,
+            4
+        ),
+        new THREE.MeshBasicMaterial({
+            map: signTexture
+        })
+    );
+
+sign.position.set(
+    0,
+    6,
+    -21
+);
+
+scene.add(sign);
+
+
+// ============================================================
+// OBJETOS DE INVESTIGAÇÃO
+// ============================================================
+
+const oldNote =
+    createBox(
+        1,
+        0.05,
+        0.7,
+        new THREE.MeshStandardMaterial({
+            color: 0xddd1a8
+        }),
+        -5,
+        0.85,
+        8
+    );
+
+oldNote.userData.interactable = true;
+oldNote.userData.type = "note";
+
+
+// ============================================================
+// DETECÇÃO DE INTERAÇÃO
+// ============================================================
+
+const raycaster =
+    new THREE.Raycaster();
+
+const center =
+    new THREE.Vector2(0, 0);
+
+let currentObject = null;
+
+
+function findInteraction() {
+
+    raycaster.setFromCamera(
+        center,
+        camera
+    );
+
+    const objects =
+        scene.children.filter(
+            object =>
+                object.userData &&
+                object.userData.interactable
+        );
+
+    const hits =
+        raycaster.intersectObjects(
+            objects,
+            true
+        );
+
+    if (
+        hits.length > 0 &&
+        hits[0].distance < 5
+    ) {
+
+        currentObject =
+            hits[0].object;
+
+        document.getElementById(
+            "interaction"
+        ).style.display = "block";
+
+    } else {
+
+        currentObject = null;
+
+        document.getElementById(
+            "interaction"
+        ).style.display = "none";
     }
-  ]);
 }
 
-window.onload = init;
+
+// ============================================================
+// INTERAÇÕES
+// ============================================================
+
+function interact() {
+
+    if (!currentObject) return;
+
+    const type =
+        currentObject.userData.type;
+
+    if (type === "olivia") {
+
+        talkToOlivia();
+
+    }
+
+    if (type === "ticket") {
+
+        collectTicket(
+            currentObject
+        );
+
+    }
+
+    if (type === "note") {
+
+        inspectNote();
+
+    }
+
+}
+
+
+// ============================================================
+// OLIVIA
+// ============================================================
+
+let dialogueLines = [];
+let dialogueIndex = 0;
+
+
+function talkToOlivia() {
+
+    if (gameState.flags.metOlivia) {
+
+        openDialogue(
+            "Olivia",
+            [
+                "Você ainda está procurando respostas?",
+                "Então procure o trem.",
+                "Mas não confie no horário que aparece no relógio."
+            ]
+        );
+
+        return;
+    }
+
+    gameState.flags.metOlivia = true;
+
+    gameState.mission =
+        "Encontre uma maneira de descobrir o que aconteceu na estação.";
+
+    updateMission();
+
+    openDialogue(
+        "Olivia",
+        [
+            "Você finalmente acordou.",
+            "Olivia... é esse o meu nome.",
+            "Esta estação deveria estar vazia.",
+            "Mas você não é a primeira pessoa a aparecer aqui.",
+            "Se quiser sair daqui, encontre o bilhete.",
+            "Depois procure pelo trem."
+        ]
+    );
+
+}
+
+
+// ============================================================
+// DIÁLOGO
+// ============================================================
+
+function openDialogue(
+    name,
+    lines
+) {
+
+    dialogueLines = lines;
+    dialogueIndex = 0;
+
+    gameState.dialogueOpen = true;
+
+    document.getElementById(
+        "dialogue"
+    ).style.display = "block";
+
+    document.getElementById(
+        "dialogue-name"
+    ).textContent = name;
+
+    document.getElementById(
+        "dialogue-text"
+    ).textContent =
+        dialogueLines[0];
+
+    controls.unlock();
+
+}
+
+
+function nextDialogue() {
+
+    dialogueIndex++;
+
+    if (
+        dialogueIndex >=
+        dialogueLines.length
+    ) {
+
+        closeDialogue();
+
+        return;
+    }
+
+    document.getElementById(
+        "dialogue-text"
+    ).textContent =
+        dialogueLines[
+            dialogueIndex
+        ];
+
+}
+
+
+function closeDialogue() {
+
+    gameState.dialogueOpen = false;
+
+    document.getElementById(
+        "dialogue"
+    ).style.display = "none";
+}
+
+
+// ============================================================
+// BILHETE
+// ============================================================
+
+function collectTicket(
+    object
+) {
+
+    if (
+        gameState.flags.foundTicket
+    ) return;
+
+    gameState.flags.foundTicket =
+        true;
+
+    gameState.inventory.push({
+        name: "Bilhete antigo",
+        icon: "🎫",
+        description:
+            "Um bilhete de metrô com uma data impossível."
+    });
+
+    gameState.clues++;
+
+    gameState.mission =
+        "Converse novamente com Olivia.";
+
+    updateMission();
+
+    scene.remove(object);
+
+    notify(
+        "🎫 Bilhete antigo encontrado."
+    );
+
+}
+
+
+// ============================================================
+// NOTA
+// ============================================================
+
+function inspectNote() {
+
+    gameState.clues++;
+
+    gameState.flags.inspectedClock = true;
+
+    notify(
+        "🔎 Você encontrou uma anotação: 'O trem chega sempre à meia-noite.'"
+    );
+
+    gameState.mission =
+        "Descubra por que o trem continua chegando.";
+
+    updateMission();
+
+}
+
+
+// ============================================================
+// NOTIFICAÇÃO
+// ============================================================
+
+let notificationTimer;
+
+
+function notify(
+    text
+) {
+
+    const element =
+        document.getElementById(
+            "notification"
+        );
+
+    element.textContent = text;
+    element.style.display = "block";
+
+    clearTimeout(
+        notificationTimer
+    );
+
+    notificationTimer =
+        setTimeout(() => {
+
+            element.style.display =
+                "none";
+
+        }, 3500);
+
+}
+
+
+// ============================================================
+// INVENTÁRIO
+// ============================================================
+
+function openInventory() {
+
+    const inventory =
+        document.getElementById(
+            "inventory"
+        );
+
+    const items =
+        document.getElementById(
+            "items"
+        );
+
+    items.innerHTML = "";
+
+    if (
+        gameState.inventory.length === 0
+    ) {
+
+        items.innerHTML =
+            "Nenhum item encontrado.";
+
+    } else {
+
+        gameState.inventory.forEach(
+            item => {
+
+                const div =
+                    document.createElement(
+                        "div"
+                    );
+
+                div.className = "item";
+
+                div.innerHTML = `
+                    <div class="item-name">
+                        ${item.icon} ${item.name}
+                    </div>
+
+                    <div class="item-description">
+                        ${item.description}
+                    </div>
+                `;
+
+                items.appendChild(div);
+
+            }
+        );
+
+    }
+
+    inventory.style.display = "block";
+
+    gameState.inventoryOpen = true;
+
+    controls.unlock();
+}
+
+
+function closeInventory() {
+
+    document.getElementById(
+        "inventory"
+    ).style.display = "none";
+
+    gameState.inventoryOpen = false;
+}
+
+
+// ============================================================
+// MISSÃO
+// ============================================================
+
+function updateMission() {
+
+    document.getElementById(
+        "mission"
+    ).textContent =
+        gameState.mission;
+
+}
+
+
+// ============================================================
+// TECLADO
+// ============================================================
+
+const keys = {};
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        keys[event.code] = true;
+
+        if (
+            event.code === "KeyE" &&
+            !gameState.dialogueOpen &&
+            !gameState.inventoryOpen
+        ) {
+
+            interact();
+
+        }
+
+        if (
+            event.code === "KeyI"
+        ) {
+
+            if (
+                gameState.inventoryOpen
+            ) {
+
+                closeInventory();
+
+            } else {
+
+                openInventory();
+
+            }
+
+        }
+
+    }
+);
+
+
+document.addEventListener(
+    "keyup",
+    event => {
+
+        keys[event.code] = false;
+
+    }
+);
+
+
+// ============================================================
+// MOVIMENTO
+// ============================================================
+
+const clock =
+    new THREE.Clock();
+
+
+function movePlayer(
+    delta
+) {
+
+    if (
+        !controls.isLocked ||
+        gameState.dialogueOpen ||
+        gameState.inventoryOpen
+    ) {
+        return;
+    }
+
+    const speed = 5;
+
+    let direction =
+        new THREE.Vector3();
+
+    if (keys["KeyW"])
+        direction.z -= 1;
+
+    if (keys["KeyS"])
+        direction.z += 1;
+
+    if (keys["KeyA"])
+        direction.x -= 1;
+
+    if (keys["KeyD"])
+        direction.x += 1;
+
+    if (
+        direction.length() > 0
+    ) {
+
+        direction.normalize();
+
+        controls.moveRight(
+            direction.x *
+            speed *
+            delta
+        );
+
+        controls.moveForward(
+            -direction.z *
+            speed *
+            delta
+        );
+
+    }
+
+    camera.position.x =
+        THREE.MathUtils.clamp(
+            camera.position.x,
+            -32,
+            32
+        );
+
+    camera.position.z =
+        THREE.MathUtils.clamp(
+            camera.position.z,
+            -19,
+            19
+        );
+
+    camera.position.y =
+        1.7;
+
+}
+
+
+// ============================================================
+// LANTERNA
+// ============================================================
+
+function toggleFlashlight() {
+
+    if (
+        !gameState.flags.flashlight
+    ) {
+
+        gameState.flags.flashlight =
+            true;
+
+        flashlight.intensity = 4;
+
+        notify(
+            "🔦 Lanterna ligada."
+        );
+
+    } else {
+
+        flashlight.intensity = 0;
+
+        notify(
+            "🔦 Lanterna desligada."
+        );
+
+    }
+
+}
+
+
+// tecla F
+document.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.code === "KeyF" &&
+            !gameState.dialogueOpen &&
+            !gameState.inventoryOpen
+        ) {
+
+            toggleFlashlight();
+
+        }
+
+    }
+);
+
+
+// ============================================================
+// BOTÕES
+// ============================================================
+
+document.getElementById(
+    "dialogue-next"
+).addEventListener(
+    "click",
+    nextDialogue
+);
+
+
+document.getElementById(
+    "close-inventory"
+).addEventListener(
+    "click",
+    closeInventory
+);
+
+
+// ============================================================
+// RESIZE
+// ============================================================
+
+window.addEventListener(
+    "resize",
+    () => {
+
+        camera.aspect =
+            window.innerWidth /
+            window.innerHeight;
+
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+
+    }
+);
+
+
+// ============================================================
+// ANIMAÇÃO
+// ============================================================
+
+function animate() {
+
+    requestAnimationFrame(
+        animate
+    );
+
+    const delta =
+        Math.min(
+            clock.getDelta(),
+            0.05
+        );
+
+    movePlayer(delta);
+
+    findInteraction();
+
+    renderer.render(
+        scene,
+        camera
+    );
+
+}
+
+
+updateMission();
+
+
+// ============================================================
+// INICIAR
+// ============================================================
+
+setTimeout(() => {
+
+    document.getElementById(
+        "loading"
+    ).style.display = "none";
+
+    notify(
+        "Você acordou na Estação Central."
+    );
+
+}, 1200);
+
+
+animate();
