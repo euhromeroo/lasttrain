@@ -1,135 +1,249 @@
 import * as THREE from "three";
-import { PointerLockControls } from "three/addons/controls/PointerLockControls.js";
 
 
 /* =========================================================
-   CONFIGURAÇÕES
+   ÚLTIMO TREM
+   SCRIPT PRINCIPAL
 ========================================================= */
-
-const SAVE_KEY = "ultimo_trem_save_v3";
-
-let scene;
-let camera;
-let renderer;
-let controls;
-
-let clock = new THREE.Clock();
-
-let flashlight;
-let flashlightGlow;
-let flashlightOn = true;
-
-let player = {
-    health: 100,
-    energy: 100,
-    x: 0,
-    z: 8
-};
-
-let gameTime = {
-    hour: 23,
-    minute: 47
-};
-
-let currentLocation = "Estação Central";
-
-let keys = {};
-
-let interactables = [];
-let npcs = [];
-let pickups = [];
-let environmentObjects = [];
-
-let currentInteractable = null;
-let currentDialogue = null;
-let dialogueIndex = 0;
-let typingTimer = null;
-
-let selectedItem = null;
-
-let inventory = {
-    ticket: true,
-    flashlight: true,
-    key: false,
-    coin: false,
-    hospitalCard: false,
-    conductorBadge: false
-};
-
-let clues = [];
-
-let missions = [
-    {
-        title: "A estação vazia",
-        description: "Explore a Estação Central e descubra por que ela foi abandonada.",
-        active: true,
-        done: false
-    },
-    {
-        title: "A mulher na plataforma",
-        description: "Encontre Olivia e descubra por que ela ainda está esperando.",
-        active: false,
-        done: false
-    },
-    {
-        title: "O bilhete impossível",
-        description: "Examine o bilhete encontrado e descubra o que significa a Sala 0.",
-        active: false,
-        done: false
-    },
-    {
-        title: "Paciente 404",
-        description: "Investigue o Hospital São Lucas.",
-        active: false,
-        done: false
-    },
-    {
-        title: "Debaixo da cidade",
-        description: "Encontre uma entrada para os túneis antigos.",
-        active: false,
-        done: false
-    },
-    {
-        title: "Sala 0",
-        description: "Descubra o que realmente aconteceu naquela noite.",
-        active: false,
-        done: false
-    }
-];
 
 
 /* =========================================================
    ELEMENTOS HTML
 ========================================================= */
 
-const $ = id => document.getElementById(id);
+const loadingScreen =
+    document.getElementById("loadingScreen");
 
-const loadingScreen = $("loadingScreen");
-const mainMenu = $("mainMenu");
-const gameContainer = $("gameContainer");
-const hud = $("hud");
+const loadingText =
+    document.getElementById("loadingText");
 
-const loadingProgress = $("loadingProgress");
-const loadingText = $("loadingText");
+const loadingProgress =
+    document.getElementById("loadingProgress");
 
-const gameClock = $("gameClock");
-const locationName = $("locationName");
+const menuScreen =
+    document.getElementById("menuScreen");
 
-const lifeValue = $("lifeValue");
-const energyValue = $("energyValue");
+const gameContainer =
+    document.getElementById("gameContainer");
 
-const interactionHint = $("interactionHint");
-const interactionText = $("interactionText");
+const hud =
+    document.getElementById("hud");
 
-const objectiveText = $("objectiveText");
 
-const inventoryModal = $("inventoryModal");
-const itemModal = $("itemModal");
-const dialogueModal = $("dialogueModal");
-const missionsModal = $("missionsModal");
-const ticketModal = $("ticketModal");
-const puzzleModal = $("puzzleModal");
-const endingModal = $("endingModal");
+/* =========================================================
+   THREE.JS
+========================================================= */
+
+let scene;
+let camera;
+let renderer;
+
+
+/* =========================================================
+   JOGADOR
+========================================================= */
+
+const player = {
+
+    x: 0,
+
+    z: 14,
+
+    y: 1.72,
+
+    speed: 5.5,
+
+    sprintSpeed: 9,
+
+    health: 100,
+
+    energy: 100
+
+};
+
+
+/* =========================================================
+   CONTROLES
+========================================================= */
+
+const keys = {
+
+    w: false,
+    a: false,
+    s: false,
+    d: false,
+    shift: false
+
+};
+
+let yaw = 0;
+let pitch = 0;
+
+let mouseLocked = false;
+
+
+/* =========================================================
+   LANTERNA
+========================================================= */
+
+let flashlight;
+
+let flashlightGlow;
+
+let flashlightOn = true;
+
+
+/* =========================================================
+   GAME STATE
+========================================================= */
+
+const state = {
+
+    started: false,
+
+    currentArea: "station",
+
+    timeMinutes: 0,
+
+    clues: 0,
+
+    coins: 0,
+
+    dialogueIndex: 0,
+
+    currentDialogue: null,
+
+    selectedItem: null,
+
+    hasTicket: true,
+
+    hasKey: false,
+
+    hasCoin: false,
+
+    hasMasterKey: false,
+
+    metOlivia: false,
+
+    metKaio: false,
+
+    metConductor: false,
+
+    talkedOldWoman: false,
+
+    hospitalSolved: false,
+
+    tunnelSolved: false,
+
+    roomZeroReached: false,
+
+    ticketRead: false,
+
+    flashlightUsed: false,
+
+    ending: false
+
+};
+
+
+/* =========================================================
+   OBJETOS
+========================================================= */
+
+const inventory = [
+
+    {
+        id: "ticket",
+
+        name: "Bilhete impossível",
+
+        icon: "🎫",
+
+        description:
+            "Um bilhete antigo do metrô. A data impressa é impossível: 31/12/1999. No verso existe uma referência à Sala 0.",
+
+        usable: true
+    },
+
+    {
+        id: "flashlight",
+
+        name: "Lanterna",
+
+        icon: "🔦",
+
+        description:
+            "Uma lanterna encontrada na estação. Pressione F ou use o botão LANTERNA para ligá-la ou desligá-la.",
+
+        usable: true
+    },
+
+    {
+        id: "key",
+
+        name: "Chave antiga",
+
+        icon: "🔑",
+
+        description:
+            "Uma chave pesada e envelhecida. Parece pertencer a uma porta antiga da estação.",
+
+        usable: true
+    },
+
+    {
+        id: "coin",
+
+        name: "Moeda estranha",
+
+        icon: "🪙",
+
+        description:
+            "Uma moeda metálica com um símbolo circular gravado. O ano não pode ser identificado.",
+
+        usable: true
+    },
+
+    {
+        id: "masterkey",
+
+        name: "Chave mestra",
+
+        icon: "🗝️",
+
+        description:
+            "Uma chave maior encontrada depois de compreender parte do mistério.",
+
+        usable: true
+    },
+
+    {
+        id: "hospital",
+
+        name: "Cartão do Hospital",
+
+        icon: "🏥",
+
+        description:
+            "Cartão pertencente ao Hospital São Lucas. O número do paciente está parcialmente apagado.",
+
+        usable: false
+    },
+
+    {
+        id: "badge",
+
+        name: "Insígnia do Condutor",
+
+        icon: "🎖️",
+
+        description:
+            "Uma insígnia antiga usada por um condutor que deveria ter desaparecido há muitos anos.",
+
+        usable: true
+    }
+
+];
 
 
 /* =========================================================
@@ -137,19 +251,37 @@ const endingModal = $("endingModal");
 ========================================================= */
 
 const COLORS = {
-    wall: 0x35363a,
-    wallDark: 0x202126,
-    floor: 0x4b4c4f,
-    tile: 0x737478,
-    metal: 0x777a7d,
-    darkMetal: 0x27292c,
-    wood: 0x553e2e,
-    brass: 0xb69a58,
-    white: 0xe8e7e1,
-    warm: 0xffd98a,
-    red: 0x8e242b,
-    blue: 0x283d59,
-    green: 0x334c40
+
+    wall: 0x666a70,
+
+    wallDark: 0x454950,
+
+    floor: 0x5c6167,
+
+    tile1: 0x6c7177,
+
+    tile2: 0x595e64,
+
+    metal: 0x969ba1,
+
+    darkMetal: 0x363a40,
+
+    wood: 0x705038,
+
+    brass: 0xbda15f,
+
+    white: 0xe9e7df,
+
+    warm: 0xffdba0,
+
+    red: 0x8f2b32,
+
+    blue: 0x405978,
+
+    green: 0x52634f,
+
+    black: 0x15181c
+
 };
 
 
@@ -157,117 +289,101 @@ const COLORS = {
    MATERIAIS
 ========================================================= */
 
-function material(color, roughness = 0.75, metalness = 0) {
+function material(
+    color,
+    roughness = 0.8,
+    metalness = 0
+) {
+
     return new THREE.MeshStandardMaterial({
+
         color,
+
         roughness,
+
         metalness
     });
 }
 
-const mat = {
-    wall: material(COLORS.wall),
-    wallDark: material(COLORS.wallDark),
-    floor: material(COLORS.floor),
-    tile: material(COLORS.tile),
-    metal: material(COLORS.metal, .5, .6),
-    darkMetal: material(COLORS.darkMetal, .35, .8),
-    wood: material(COLORS.wood),
-    brass: material(COLORS.brass, .3, .7),
-    white: material(COLORS.white),
-    warm: new THREE.MeshStandardMaterial({
-        color: COLORS.warm,
-        emissive: COLORS.warm,
-        emissiveIntensity: 1.5
-    }),
-    red: material(COLORS.red),
-    blue: material(COLORS.blue),
-    green: material(COLORS.green),
-    skin: new THREE.MeshStandardMaterial({
-        color: 0xd19a78,
-        roughness: .85
-    }),
-    skinLight: new THREE.MeshStandardMaterial({
-        color: 0xe0b092,
-        roughness: .85
-    }),
-    hair: material(0x211b1b, .9),
-    hairLight: material(0x574039, .9),
-    clothesDark: material(0x17191e),
-    clothesGray: material(0x3e4148),
-    shirt: material(0x676b76),
-    shoes: material(0x101114)
-};
-
 
 /* =========================================================
-   UTILITÁRIOS 3D
+   OBJETOS GEOMÉTRICOS
 ========================================================= */
 
-function addMesh(geometry, material, position, rotation = null, parent = scene) {
+function box(
+    width,
+    height,
+    depth,
+    mat,
+    x,
+    y,
+    z
+) {
 
-    const mesh = new THREE.Mesh(geometry, material);
+    const geometry =
+        new THREE.BoxGeometry(
+            width,
+            height,
+            depth
+        );
+
+    const mesh =
+        new THREE.Mesh(
+            geometry,
+            mat
+        );
 
     mesh.position.set(
-        position.x || 0,
-        position.y || 0,
-        position.z || 0
+        x,
+        y,
+        z
     );
-
-    if (rotation) {
-        mesh.rotation.set(
-            rotation.x || 0,
-            rotation.y || 0,
-            rotation.z || 0
-        );
-    }
 
     mesh.castShadow = true;
     mesh.receiveShadow = true;
 
-    parent.add(mesh);
+    scene.add(mesh);
 
     return mesh;
 }
 
 
-function box(w, h, d, material, x, y, z, parent = scene) {
-    return addMesh(
-        new THREE.BoxGeometry(w, h, d),
-        material,
-        { x, y, z },
-        null,
-        parent
-    );
-}
+function cylinder(
+    radius,
+    height,
+    mat,
+    x,
+    y,
+    z,
+    segments = 24
+) {
 
-
-function cylinder(radius, height, material, x, y, z, segments = 20, parent = scene) {
-
-    return addMesh(
+    const geometry =
         new THREE.CylinderGeometry(
             radius,
             radius,
             height,
             segments
-        ),
-        material,
-        { x, y, z },
-        null,
-        parent
+        );
+
+    const mesh =
+        new THREE.Mesh(
+            geometry,
+            mat
+        );
+
+    mesh.position.set(
+        x,
+        y,
+        z
     );
-}
 
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
 
-function sphere(radius, material, x, y, z, parent = scene) {
+    scene.add(mesh);
 
-    return addMesh(
-        new THREE.SphereGeometry(radius, 24, 16),
-        material,
-        { x, y, z },
-        null,
-        parent
-    );
+    return mesh;
 }
 
 
@@ -275,130 +391,184 @@ function sphere(radius, material, x, y, z, parent = scene) {
    INICIALIZAÇÃO
 ========================================================= */
 
-async function init() {
+function init() {
 
-    try {
+    loadingProgress.style.width = "20%";
 
-        await loadingStep("Construindo a estação...", 20);
-        createScene();
-
-        await loadingStep("Acendendo as luzes...", 40);
-        createLights();
-
-        await loadingStep("Preparando a plataforma...", 60);
-        createStation();
-
-        await loadingStep("Preparando os personagens...", 75);
-        createCharacters();
-
-        await loadingStep("Espalhando as pistas...", 88);
-        createItems();
-
-        await loadingStep("Quase meia-noite...", 100);
-
-        setupEvents();
-
-        setTimeout(() => {
-
-            loadingScreen.classList.add("hidden");
-            mainMenu.classList.remove("hidden");
-
-        }, 500);
-
-    } catch (error) {
-
-        console.error(error);
-
-        loadingText.textContent =
-            "Não foi possível carregar a estação. Abra pelo Live Server.";
-
-        loadingProgress.style.width = "100%";
-    }
-}
+    loadingText.textContent =
+        "Criando a estação...";
 
 
-function loadingStep(text, progress) {
-
-    return new Promise(resolve => {
-
-        loadingText.textContent = text;
-        loadingProgress.style.width = `${progress}%`;
-
-        setTimeout(resolve, 250);
-    });
-}
+    scene =
+        new THREE.Scene();
 
 
-/* =========================================================
-   CENA
-========================================================= */
+    scene.background =
+        new THREE.Color(
+            0x252a31
+        );
 
-function createScene() {
 
-    scene = new THREE.Scene();
+    scene.fog =
+        new THREE.Fog(
+            0x252a31,
+            55,
+            190
+        );
 
-    scene.background = new THREE.Color(0x15171b);
 
-    scene.fog = new THREE.FogExp2(
-        0x15171b,
-        0.008
-    );
+    /* =====================================================
+       CÂMERA
+    ====================================================== */
 
-    camera = new THREE.PerspectiveCamera(
-        70,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        500
-    );
+    camera =
+        new THREE.PerspectiveCamera(
+            72,
+            window.innerWidth /
+            window.innerHeight,
+            0.05,
+            500
+        );
+
 
     camera.position.set(
         player.x,
-        1.72,
+        player.y,
         player.z
     );
 
-    renderer = new THREE.WebGLRenderer({
-        antialias: true
-    });
+
+    scene.add(camera);
+
+
+    /* =====================================================
+       RENDERER
+    ====================================================== */
+
+    renderer =
+        new THREE.WebGLRenderer({
+
+            antialias: true,
+
+            powerPreference:
+                "high-performance"
+        });
+
 
     renderer.setSize(
         window.innerWidth,
         window.innerHeight
     );
 
+
     renderer.setPixelRatio(
-        Math.min(window.devicePixelRatio, 2)
+        Math.min(
+            window.devicePixelRatio,
+            2
+        )
     );
 
+
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.shadowMap.type =
+        THREE.PCFSoftShadowMap;
 
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.45;
 
-    gameContainer.appendChild(renderer.domElement);
+    renderer.outputColorSpace =
+        THREE.SRGBColorSpace;
 
-    controls = new PointerLockControls(
-        camera,
+
+    renderer.toneMapping =
+        THREE.ACESFilmicToneMapping;
+
+
+    renderer.toneMappingExposure =
+        1.9;
+
+
+    gameContainer.appendChild(
         renderer.domElement
     );
 
-    controls.pointerSpeed = 0.75;
 
-    gameContainer.addEventListener("click", () => {
+    loadingProgress.style.width = "40%";
 
-        if (
-            !mainMenu.classList.contains("hidden") ||
-            !dialogueModal.classList.contains("hidden") ||
-            !inventoryModal.classList.contains("hidden")
-        ) {
-            return;
-        }
+    loadingText.textContent =
+        "Iluminando a plataforma...";
 
-        controls.lock();
-    });
+
+    createLights();
+
+
+    loadingProgress.style.width = "55%";
+
+    loadingText.textContent =
+        "Construindo a estação...";
+
+
+    createStation();
+
+
+    loadingProgress.style.width = "70%";
+
+    loadingText.textContent =
+        "Preparando personagens...";
+
+
+    createCharacters();
+
+
+    loadingProgress.style.width = "82%";
+
+    loadingText.textContent =
+        "Colocando objetos...";
+
+
+    createObjects();
+
+
+    loadingProgress.style.width = "92%";
+
+    loadingText.textContent =
+        "Preparando a chuva...";
+
+
+    createRain();
+
+
+    loadingProgress.style.width = "100%";
+
+    loadingText.textContent =
+        "Estação pronta.";
+
+
+    setTimeout(() => {
+
+        loadingScreen.classList.add(
+            "hidden"
+        );
+
+        menuScreen.classList.remove(
+            "hidden"
+        );
+
+    }, 700);
+
+
+    window.addEventListener(
+        "resize",
+        onResize
+    );
+
+
+    setupControls();
+
+    setupButtons();
+
+    updateHUD();
+
+    animate();
 }
 
 
@@ -408,84 +578,237 @@ function createScene() {
 
 function createLights() {
 
-    const hemi = new THREE.HemisphereLight(
-        0xbfc5d8,
-        0x24262b,
-        2.3
-    );
+    /* =====================================================
+       LUZ AMBIENTE
+    ====================================================== */
 
-    scene.add(hemi);
+    const hemisphere =
+        new THREE.HemisphereLight(
+            0xe6edff,
+            0x555960,
+            3.2
+        );
 
-    const ambient = new THREE.AmbientLight(
-        0x9ca3b5,
-        1.4
-    );
+    scene.add(hemisphere);
+
+
+    const ambient =
+        new THREE.AmbientLight(
+            0xffffff,
+            1.7
+        );
 
     scene.add(ambient);
 
 
-    // Luz principal da estação
+    /* =====================================================
+       LUZ PRINCIPAL
+    ====================================================== */
 
-    const mainLight = new THREE.PointLight(
-        0xffe6b0,
-        9,
-        70,
-        1.5
+    const directional =
+        new THREE.DirectionalLight(
+            0xe9edff,
+            2.5
+        );
+
+    directional.position.set(
+        10,
+        15,
+        10
     );
 
-    mainLight.position.set(
+    directional.castShadow = true;
+
+    directional.shadow.mapSize.set(
+        2048,
+        2048
+    );
+
+    scene.add(
+        directional
+    );
+
+
+    /* =====================================================
+       LUZ CENTRAL
+    ====================================================== */
+
+    const centerLight =
+        new THREE.PointLight(
+            0xffe8c7,
+            18,
+            55,
+            1.4
+        );
+
+    centerLight.position.set(
         0,
-        8,
-        0
+        6,
+        -5
     );
 
-    mainLight.castShadow = true;
-
-    scene.add(mainLight);
-
-
-    // Lanternas do jogador
-
-    flashlight = new THREE.SpotLight(
-        0xffffff,
-        13,
-        55,
-        Math.PI / 5,
-        0.45,
-        1.2
+    scene.add(
+        centerLight
     );
+
+
+    /* =====================================================
+       LUZES DA ESTAÇÃO
+    ====================================================== */
+
+    const lightPositions = [
+
+        [-22, 5.7, 12],
+        [-11, 5.7, 12],
+        [0, 5.7, 12],
+        [11, 5.7, 12],
+        [22, 5.7, 12],
+
+        [-22, 5.7, -8],
+        [-11, 5.7, -8],
+        [0, 5.7, -8],
+        [11, 5.7, -8],
+        [22, 5.7, -8],
+
+        [-22, 5.7, -30],
+        [-11, 5.7, -30],
+        [0, 5.7, -30],
+        [11, 5.7, -30],
+        [22, 5.7, -30],
+
+        [-22, 5.7, -52],
+        [-11, 5.7, -52],
+        [0, 5.7, -52],
+        [11, 5.7, -52],
+        [22, 5.7, -52],
+
+        [-22, 5.7, -74],
+        [-11, 5.7, -74],
+        [0, 5.7, -74],
+        [11, 5.7, -74],
+        [22, 5.7, -74]
+    ];
+
+
+    lightPositions.forEach(
+        position => {
+
+            const light =
+                new THREE.PointLight(
+                    0xffe6bf,
+                    7,
+                    24,
+                    1.5
+                );
+
+            light.position.set(
+                position[0],
+                position[1],
+                position[2]
+            );
+
+            scene.add(light);
+
+
+            /* luminária */
+
+            cylinder(
+                0.18,
+                0.15,
+
+                material(
+                    0xffffff,
+                    .35
+                ),
+
+                position[0],
+                8.85,
+                position[2],
+
+                20
+            );
+        }
+    );
+
+
+    /* =====================================================
+       LANTERNA
+    ====================================================== */
+
+    flashlight =
+        new THREE.SpotLight(
+            0xfff4df,
+            32,
+            85,
+            Math.PI / 4.5,
+            .38,
+            1
+        );
+
 
     flashlight.position.set(
-        0,
-        1.7,
-        0
+        .18,
+        -.15,
+        -.25
     );
+
 
     flashlight.castShadow = true;
 
-    flashlight.shadow.mapSize.width = 2048;
-    flashlight.shadow.mapSize.height = 2048;
 
-    flashlight.shadow.camera.near = 0.1;
-    flashlight.shadow.camera.far = 70;
+    flashlight.shadow.mapSize.width =
+        2048;
+
+    flashlight.shadow.mapSize.height =
+        2048;
+
+
+    flashlight.shadow.camera.near =
+        .1;
+
+    flashlight.shadow.camera.far =
+        90;
+
 
     flashlight.target.position.set(
         0,
-        1.2,
-        -10
+        -.15,
+        -14
     );
 
-    camera.add(flashlight);
-    camera.add(flashlight.target);
 
-
-    flashlightGlow = new THREE.PointLight(
-        0xdde7ff,
-        2.2,
-        12
+    camera.add(
+        flashlight
     );
 
-    camera.add(flashlightGlow);
+    camera.add(
+        flashlight.target
+    );
+
+
+    /* =====================================================
+       BRILHO DA LANTERNA
+    ====================================================== */
+
+    flashlightGlow =
+        new THREE.PointLight(
+            0xffe9ca,
+            6,
+            15,
+            1.4
+        );
+
+
+    flashlightGlow.position.set(
+        0,
+        -.3,
+        -1
+    );
+
+
+    camera.add(
+        flashlightGlow
+    );
 }
 
 
@@ -495,340 +818,502 @@ function createLights() {
 
 function createStation() {
 
-    // Piso enorme
+    /* =====================================================
+       PISO PRINCIPAL
+    ====================================================== */
 
     box(
-        70,
-        .35,
-        110,
-        mat.floor,
+        59,
+        .2,
+        100,
+
+        material(
+            COLORS.floor,
+            .9
+        ),
+
         0,
-        -.2,
-        -25
+        -.1,
+        -30
     );
 
 
-    // Teto
+    /* =====================================================
+       PISO EM TILES
+    ====================================================== */
+
+    for (
+        let x = -28;
+        x <= 28;
+        x += 4
+    ) {
+
+        for (
+            let z = 16;
+            z >= -76;
+            z -= 4
+        ) {
+
+            const checker =
+                (
+                    Math.floor(x / 4) +
+                    Math.floor(z / 4)
+                ) % 2;
+
+
+            box(
+                3.85,
+                .04,
+                3.85,
+
+                material(
+                    checker === 0
+                        ? COLORS.tile1
+                        : COLORS.tile2,
+
+                    .88
+                ),
+
+                x,
+                .03,
+                z
+            );
+        }
+    }
+
+
+    /* =====================================================
+       PAREDES
+    ====================================================== */
 
     box(
-        70,
-        .5,
-        110,
-        mat.wallDark,
-        0,
-        9,
-        -25
-    );
-
-
-    // Parede esquerda
-
-    box(
-        .5,
+        .7,
         9,
         110,
-        mat.wall,
+
+        material(
+            COLORS.wall,
+            .9
+        ),
+
         -30,
         4.5,
-        -25
+        -30
     );
 
 
-    // Parede direita
-
     box(
-        .5,
+        .7,
         9,
         110,
-        mat.wall,
+
+        material(
+            COLORS.wall,
+            .9
+        ),
+
         30,
         4.5,
-        -25
+        -30
     );
 
 
-    // Fundo da estação
+    /* =====================================================
+       TETO
+    ====================================================== */
 
     box(
-        60,
-        9,
-        .5,
-        mat.wall,
-        0,
-        4.5,
-        -80
-    );
+        61,
+        .4,
+        110,
 
-
-    createPlatformTiles();
-
-    createColumns();
-
-    createBenches();
-
-    createStationLights();
-
-    createSigns();
-
-    createTracks();
-
-    createTunnel();
-
-    createRain();
-
-    createStationDecorations();
-}
-
-
-/* =========================================================
-   PISO / TILES
-========================================================= */
-
-function createPlatformTiles() {
-
-    for (let x = -28; x <= 28; x += 4) {
-
-        for (let z = 18; z >= -78; z -= 4) {
-
-            const tile = box(
-                3.8,
-                .025,
-                3.8,
-                ((x + z) / 4) % 2 === 0
-                    ? mat.tile
-                    : mat.floor,
-                x,
-                -.01,
-                z
-            );
-
-            tile.receiveShadow = true;
-        }
-    }
-
-
-    // Faixa de segurança
-
-    const safety = new THREE.Mesh(
-        new THREE.BoxGeometry(
-            60,
-            .04,
-            1.2
+        material(
+            COLORS.wallDark,
+            .85
         ),
-        material(0xd3b05b)
+
+        0,
+        9,
+        -30
     );
 
-    safety.position.set(
-        0,
-        .02,
-        -5
-    );
 
-    safety.receiveShadow = true;
+    /* =====================================================
+       COLUNAS
+    ====================================================== */
 
-    scene.add(safety);
-}
+    for (
+        let z = 13;
+        z >= -76;
+        z -= 11
+    ) {
 
+        createColumn(
+            -22,
+            z
+        );
 
-/* =========================================================
-   COLUNAS
-========================================================= */
-
-function createColumns() {
-
-    for (let z = 14; z >= -74; z -= 11) {
-
-        for (const x of [-23, 23]) {
-
-            cylinder(
-                .55,
-                8.2,
-                mat.darkMetal,
-                x,
-                4,
-                z,
-                18
-            );
-
-            cylinder(
-                .72,
-                .18,
-                mat.metal,
-                x,
-                .2,
-                z,
-                20
-            );
-
-            cylinder(
-                .72,
-                .18,
-                mat.metal,
-                x,
-                8,
-                z,
-                20
-            );
-
-            // faixa metálica decorativa
-
-            const ring = new THREE.Mesh(
-                new THREE.TorusGeometry(
-                    .57,
-                    .07,
-                    10,
-                    24
-                ),
-                mat.brass
-            );
-
-            ring.position.set(
-                x,
-                6.4,
-                z
-            );
-
-            ring.rotation.x = Math.PI / 2;
-
-            scene.add(ring);
-        }
-    }
-}
-
-
-/* =========================================================
-   BANCOS
-========================================================= */
-
-function createBench(x, z, rotation = 0) {
-
-    const group = new THREE.Group();
-
-    group.position.set(
-        x,
-        0,
-        z
-    );
-
-    group.rotation.y = rotation;
-
-    // assento
-
-    const seat = box(
-        3.4,
-        .25,
-        .65,
-        mat.wood,
-        0,
-        1.05,
-        0,
-        group
-    );
-
-    // encosto
-
-    box(
-        3.4,
-        1.2,
-        .18,
-        mat.wood,
-        0,
-        1.7,
-        .22,
-        group
-    );
-
-    // pés
-
-    for (const side of [-1, 1]) {
-
-        box(
-            .14,
-            1.05,
-            .45,
-            mat.darkMetal,
-            side * 1.2,
-            .5,
-            0,
-            group
+        createColumn(
+            22,
+            z
         );
     }
 
-    scene.add(group);
 
-    environmentObjects.push(group);
-}
+    /* =====================================================
+       TRILHOS
+    ====================================================== */
+
+    createTracks();
 
 
-function createBenches() {
+    /* =====================================================
+       LINHA DE SEGURANÇA
+    ====================================================== */
 
-    createBench(-12, 8);
-    createBench(12, 8);
-    createBench(-12, -20);
-    createBench(12, -20);
-    createBench(-12, -50);
-    createBench(12, -50);
+    box(
+        57,
+        .07,
+        .8,
+
+        material(
+            0xd5b94d,
+            .8
+        ),
+
+        0,
+        .08,
+        -4.8
+    );
+
+
+    /* =====================================================
+       BANCOS
+    ====================================================== */
+
+    for (
+        let z = 8;
+        z >= -70;
+        z -= 15
+    ) {
+
+        createBench(
+            -13,
+            z
+        );
+
+        createBench(
+            13,
+            z - 6
+        );
+    }
+
+
+    /* =====================================================
+       POSTES
+    ====================================================== */
+
+    for (
+        let z = 8;
+        z >= -70;
+        z -= 16
+    ) {
+
+        createLampPost(
+            -7,
+            z
+        );
+
+        createLampPost(
+            7,
+            z - 8
+        );
+    }
+
+
+    /* =====================================================
+       PLACAS
+    ====================================================== */
+
+    createStationSign(
+        "ESTAÇÃO CENTRAL",
+        0,
+        4.8,
+        5
+    );
+
+
+    createStationSign(
+        "PLATAFORMA 01",
+        -20,
+        3.5,
+        -18
+    );
+
+
+    createStationSign(
+        "PLATAFORMA 02",
+        20,
+        3.5,
+        -38
+    );
+
+
+    createStationSign(
+        "ÚLTIMO TREM",
+        0,
+        4.5,
+        -72
+    );
+
+
+    /* =====================================================
+       RELÓGIO
+    ====================================================== */
+
+    createClock(
+        0,
+        6,
+        -1
+    );
+
+
+    /* =====================================================
+       PORTA PARA SALA 0
+    ====================================================== */
+
+    createRoomZeroDoor();
+
+
+    /* =====================================================
+       TREM
+    ====================================================== */
+
+    createTrain(
+        0,
+        1.8,
+        -75
+    );
 }
 
 
 /* =========================================================
-   POSTES / LUMINÁRIAS
+   COLUNA
 ========================================================= */
 
-function createStationLights() {
+function createColumn(
+    x,
+    z
+) {
 
-    for (let z = 12; z >= -72; z -= 12) {
+    box(
+        1.4,
+        7,
+        1.4,
 
-        for (const x of [-16, 16]) {
+        material(
+            COLORS.metal,
+            .7,
+            .25
+        ),
 
-            cylinder(
-                .08,
-                5,
-                mat.darkMetal,
-                x,
-                2.5,
-                z,
-                12
-            );
+        x,
+        3.5,
+        z
+    );
 
-            const arm = box(
-                1.3,
-                .08,
-                .08,
-                mat.darkMetal,
-                x + (x > 0 ? -.6 : .6),
-                4.9,
+
+    box(
+        2.1,
+        .35,
+        2.1,
+
+        material(
+            COLORS.darkMetal,
+            .65,
+            .35
+        ),
+
+        x,
+        7.1,
+        z
+    );
+
+
+    box(
+        1.9,
+        .25,
+        1.9,
+
+        material(
+            COLORS.brass,
+            .4,
+            .45
+        ),
+
+        x,
+        .15,
+        z
+    );
+}
+
+
+/* =========================================================
+   BANCO
+========================================================= */
+
+function createBench(
+    x,
+    z
+) {
+
+    const wood =
+        material(
+            COLORS.wood,
+            .78
+        );
+
+
+    const metal =
+        material(
+            COLORS.darkMetal,
+            .55,
+            .4
+        );
+
+
+    box(
+        3.8,
+        .25,
+        .75,
+        wood,
+        x,
+        1.15,
+        z
+    );
+
+
+    box(
+        3.8,
+        .18,
+        .7,
+        wood,
+        x,
+        1.65,
+        z + .12
+    );
+
+
+    [-1.4, 1.4].forEach(
+        dx => {
+
+            box(
+                .18,
+                1.1,
+                .5,
+                metal,
+
+                x + dx,
+                .55,
                 z
             );
-
-            const lampX =
-                x + (x > 0 ? -1.2 : 1.2);
-
-            const lamp = sphere(
-                .17,
-                mat.warm,
-                lampX,
-                4.75,
-                z
-            );
-
-            const light = new THREE.PointLight(
-                0xffdca0,
-                4.5,
-                18
-            );
-
-            light.position.set(
-                lampX,
-                4.7,
-                z
-            );
-
-            light.castShadow = true;
-
-            scene.add(light);
         }
-    }
+    );
+}
+
+
+/* =========================================================
+   POSTE
+========================================================= */
+
+function createLampPost(
+    x,
+    z
+) {
+
+    const pole =
+        material(
+            COLORS.darkMetal,
+            .5,
+            .45
+        );
+
+
+    cylinder(
+        .12,
+        5.5,
+        pole,
+        x,
+        2.75,
+        z
+    );
+
+
+    box(
+        1.2,
+        .18,
+        .45,
+
+        pole,
+
+        x,
+        5.45,
+        z
+    );
+
+
+    const lamp =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                .23,
+                20,
+                12
+            ),
+
+            new THREE.MeshStandardMaterial({
+
+                color:
+                    COLORS.warm,
+
+                emissive:
+                    COLORS.warm,
+
+                emissiveIntensity:
+                    2.2,
+
+                roughness:
+                    .25
+            })
+        );
+
+
+    lamp.position.set(
+        x,
+        5.65,
+        z
+    );
+
+
+    scene.add(lamp);
+
+
+    const light =
+        new THREE.PointLight(
+            COLORS.warm,
+            5,
+            18,
+            1.5
+        );
+
+
+    light.position.set(
+        x,
+        5.6,
+        z
+    );
+
+
+    scene.add(light);
 }
 
 
@@ -836,89 +1321,89 @@ function createStationLights() {
    PLACAS
 ========================================================= */
 
-function createSign(text, x, y, z, rotation = 0) {
+function createStationSign(
+    text,
+    x,
+    y,
+    z
+) {
 
-    const canvas = document.createElement("canvas");
+    const board =
+        box(
+            6,
+            1.3,
+            .15,
 
-    canvas.width = 512;
-    canvas.height = 128;
+            material(
+                0x24282e,
+                .65,
+                .15
+            ),
 
-    const ctx = canvas.getContext("2d");
+            x,
+            y,
+            z
+        );
 
-    ctx.fillStyle = "#20242a";
-    ctx.fillRect(0, 0, 512, 128);
 
-    ctx.strokeStyle = "#777";
-    ctx.lineWidth = 4;
-    ctx.strokeRect(3, 3, 506, 122);
-
-    ctx.fillStyle = "#eeeeea";
-    ctx.font = "bold 45px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-
-    ctx.fillText(
-        text,
-        256,
-        64
-    );
-
-    const texture = new THREE.CanvasTexture(canvas);
-
-    const sign = new THREE.Mesh(
-        new THREE.PlaneGeometry(5, 1.25),
-        new THREE.MeshStandardMaterial({
-            map: texture,
-            emissive: 0x101010,
-            emissiveIntensity: .4
-        })
-    );
-
-    sign.position.set(
-        x,
-        y,
-        z
-    );
-
-    sign.rotation.y = rotation;
-
-    scene.add(sign);
+    board.userData.signText =
+        text;
 }
 
 
-function createSigns() {
+/* =========================================================
+   RELÓGIO
+========================================================= */
 
-    createSign(
-        "ESTAÇÃO CENTRAL",
-        0,
-        6.5,
-        -2,
-        0
-    );
+function createClock(
+    x,
+    y,
+    z
+) {
 
-    createSign(
-        "PLATAFORMA 01",
-        -18,
-        5,
-        -10,
-        Math.PI / 2
-    );
+    const frame =
+        cylinder(
+            1.15,
+            .22,
 
-    createSign(
-        "SAÍDA",
-        20,
-        5,
-        -40,
-        -Math.PI / 2
-    );
+            material(
+                0x282c31,
+                .55,
+                .4
+            ),
 
-    createSign(
-        "LINHA 0",
-        0,
-        6,
-        -74,
-        0
-    );
+            x,
+            y,
+            z,
+
+            40
+        );
+
+
+    frame.rotation.x =
+        Math.PI / 2;
+
+
+    const face =
+        cylinder(
+            .95,
+            .05,
+
+            material(
+                0xe1e0d9,
+                .5
+            ),
+
+            x,
+            y,
+            z - .13,
+
+            40
+        );
+
+
+    face.rotation.x =
+        Math.PI / 2;
 }
 
 
@@ -928,34 +1413,51 @@ function createSigns() {
 
 function createTracks() {
 
-    const trackZ = -25;
-
-    for (const x of [-9, 9]) {
-
-        box(
-            .14,
-            .12,
-            95,
-            mat.metal,
-            x,
-            -.02,
-            trackZ
+    const railMaterial =
+        material(
+            0x555a60,
+            .42,
+            .8
         );
-    }
+
+
+    [-4.8, -2.5].forEach(
+        x => {
+
+            box(
+                .18,
+                .12,
+                100,
+
+                railMaterial,
+
+                x,
+                .13,
+                -30
+            );
+        }
+    );
+
 
     for (
-        let z = trackZ - 45;
-        z <= trackZ + 45;
-        z += 2
+        let z = 16;
+        z >= -78;
+        z -= 1.2
     ) {
 
         box(
-            22,
-            .15,
-            .18,
-            mat.darkMetal,
-            0,
-            -.02,
+            8,
+            .08,
+            .16,
+
+            material(
+                0x474b50,
+                .7,
+                .3
+            ),
+
+            -3.65,
+            .1,
             z
         );
     }
@@ -963,145 +1465,928 @@ function createTracks() {
 
 
 /* =========================================================
-   TÚNEL
+   PORTA SALA 0
 ========================================================= */
 
-function createTunnel() {
+function createRoomZeroDoor() {
 
-    const tunnel = new THREE.Mesh(
-        new THREE.CylinderGeometry(
-            8,
-            8,
-            16,
-            32,
-            1,
-            false,
-            0,
-            Math.PI
+    box(
+        6,
+        5,
+        .5,
+
+        material(
+            0x262a30,
+            .5,
+            .4
         ),
-        mat.wallDark
-    );
 
-    tunnel.rotation.z = Math.PI / 2;
-
-    tunnel.position.set(
         0,
-        4,
-        -78
+        2.5,
+        -66
     );
 
-    scene.add(tunnel);
 
+    box(
+        4.8,
+        3.8,
+        .08,
 
-    const tunnelDark = new THREE.Mesh(
-        new THREE.CircleGeometry(
-            7.7,
-            32
+        material(
+            0x101216,
+            .35,
+            .1
         ),
-        new THREE.MeshBasicMaterial({
-            color: 0x020305
-        })
-    );
 
-    tunnelDark.position.set(
         0,
-        4,
-        -79
+        2.1,
+        -65.7
     );
 
-    tunnelDark.rotation.y = Math.PI;
 
-    scene.add(tunnelDark);
+    createStationSign(
+        "SALA 0",
+        0,
+        5.3,
+        -65.5
+    );
 }
 
 
 /* =========================================================
-   DECORAÇÕES
+   TREM
 ========================================================= */
 
-function createStationDecorations() {
+function createTrain(
+    x,
+    y,
+    z
+) {
 
-    // Lixeiras
+    const train =
+        new THREE.Group();
 
-    for (const pos of [
-        [-19, 1, 4],
-        [19, 1, 4],
-        [-19, 1, -30],
-        [19, 1, -30],
-        [-19, 1, -60]
-    ]) {
 
-        cylinder(
-            .3,
-            1.2,
-            mat.darkMetal,
-            pos[0],
-            .6,
-            pos[2],
-            18
+    const body =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                11,
+                4.2,
+                8
+            ),
+
+            material(
+                0x4b5057,
+                .5,
+                .4
+            )
+        );
+
+
+    body.position.y = 2.4;
+
+    train.add(body);
+
+
+    const front =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                10.5,
+                3.6,
+                .4
+            ),
+
+            material(
+                0x22262b,
+                .4,
+                .6
+            )
+        );
+
+
+    front.position.set(
+        0,
+        2.5,
+        -4.1
+    );
+
+
+    train.add(front);
+
+
+    /* janelas */
+
+    for (
+        let i = -3.5;
+        i <= 3.5;
+        i += 1.75
+    ) {
+
+        box(
+            1.35,
+            1.1,
+            .12,
+
+            material(
+                0x1b3448,
+                .25,
+                .45
+            ),
+
+            i,
+            3,
+            z - 4.13
         );
     }
 
 
-    // Relógio grande
+    /* luzes frontais */
 
-    const clockGroup = new THREE.Group();
+    [-2.6, 2.6].forEach(
+        dx => {
 
-    clockGroup.position.set(
-        0,
-        5.5,
-        -1.5
+            const lamp =
+                new THREE.Mesh(
+                    new THREE.SphereGeometry(
+                        .25,
+                        16,
+                        10
+                    ),
+
+                    new THREE.MeshStandardMaterial({
+
+                        color:
+                            0xfff2c4,
+
+                        emissive:
+                            0xffe4a0,
+
+                        emissiveIntensity:
+                            4
+                    })
+                );
+
+
+            lamp.position.set(
+                dx,
+                2,
+                z - 4.35
+            );
+
+
+            scene.add(lamp);
+        }
     );
 
-    const clockFace = cylinder(
-        1.15,
-        .18,
-        mat.white,
-        0,
-        0,
-        0,
-        32,
-        clockGroup
+
+    train.position.set(
+        x,
+        y,
+        z
     );
 
-    clockFace.rotation.x = Math.PI / 2;
 
-    const clockCenter = sphere(
-        .1,
-        mat.darkMetal,
-        0,
-        0,
-        -.15,
-        clockGroup
+    scene.add(train);
+
+
+    train.userData.isTrain = true;
+
+    train.userData.interact =
+        true;
+}
+
+
+/* =========================================================
+   PERSONAGENS
+========================================================= */
+
+const characters = [];
+
+
+function createCharacters() {
+
+    createHuman(
+        "Olivia",
+        7,
+        1,
+        -8,
+        0x6e516f,
+        0x2d2029
     );
 
-    const hand1 = box(
-        .06,
-        .7,
-        .04,
-        mat.darkMetal,
-        0,
-        .3,
-        -.18,
-        clockGroup
+
+    createHuman(
+        "Kaio",
+        -13,
+        1,
+        -35,
+        0x53657d,
+        0x292d34
     );
 
-    hand1.rotation.z = -.7;
 
-    const hand2 = box(
-        .05,
+    createHuman(
+        "Condutor",
+        5,
+        1,
+        -72,
+        0x30343b,
+        0x17191c
+    );
+
+
+    createHuman(
+        "Senhora",
+        -10,
+        1,
+        -55,
+        0x5e665b,
+        0x45423e
+    );
+}
+
+
+/* =========================================================
+   PERSONAGEM HUMANO
+========================================================= */
+
+function createHuman(
+    name,
+    x,
+    y,
+    z,
+    shirtColor,
+    pantsColor
+) {
+
+    const group =
+        new THREE.Group();
+
+
+    /* pernas */
+
+    const legMaterial =
+        material(
+            pantsColor,
+            .85
+        );
+
+
+    [-.18, .18].forEach(
+        lx => {
+
+            const leg =
+                new THREE.Mesh(
+                    new THREE.CylinderGeometry(
+                        .15,
+                        .17,
+                        .9,
+                        12
+                    ),
+
+                    legMaterial
+                );
+
+
+            leg.position.set(
+                lx,
+                .95,
+                0
+            );
+
+
+            leg.castShadow = true;
+
+            group.add(leg);
+
+
+            const shoe =
+                new THREE.Mesh(
+                    new THREE.BoxGeometry(
+                        .3,
+                        .15,
+                        .5
+                    ),
+
+                    material(
+                        0x191a1d,
+                        .8
+                    )
+                );
+
+
+            shoe.position.set(
+                lx,
+                .48,
+                -.08
+            );
+
+
+            shoe.castShadow = true;
+
+            group.add(shoe);
+        }
+    );
+
+
+    /* corpo */
+
+    const torso =
+        new THREE.Mesh(
+            new THREE.CylinderGeometry(
+                .43,
+                .5,
+                1.15,
+                16
+            ),
+
+            material(
+                shirtColor,
+                .78
+            )
+        );
+
+
+    torso.position.y =
+        1.8;
+
+
+    torso.castShadow = true;
+
+    group.add(torso);
+
+
+    /* pescoço */
+
+    const neck =
+        new THREE.Mesh(
+            new THREE.CylinderGeometry(
+                .13,
+                .15,
+                .18,
+                12
+            ),
+
+            material(
+                0xc79572,
+                .9
+            )
+        );
+
+
+    neck.position.y =
+        2.43;
+
+    group.add(neck);
+
+
+    /* cabeça */
+
+    const head =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                .4,
+                24,
+                18
+            ),
+
+            material(
+                0xc79572,
+                .9
+            )
+        );
+
+
+    head.scale.set(
+        .9,
+        1.08,
+        .9
+    );
+
+
+    head.position.y =
+        2.78;
+
+
+    head.castShadow = true;
+
+    group.add(head);
+
+
+    /* cabelo */
+
+    const hair =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                .42,
+                24,
+                16
+            ),
+
+            material(
+                0x282126,
+                .95
+            )
+        );
+
+
+    hair.scale.set(
+        .96,
+        .55,
+        .96
+    );
+
+
+    hair.position.set(
+        0,
+        3.04,
+        .01
+    );
+
+
+    group.add(hair);
+
+
+    /* olhos */
+
+    const eyeMaterial =
+        new THREE.MeshBasicMaterial({
+            color: 0x171717
+        });
+
+
+    [-.14, .14].forEach(
+        ex => {
+
+            const eye =
+                new THREE.Mesh(
+                    new THREE.SphereGeometry(
+                        .045,
+                        8,
+                        8
+                    ),
+
+                    eyeMaterial
+                );
+
+
+            eye.position.set(
+                ex,
+                2.82,
+                -.36
+            );
+
+
+            group.add(eye);
+        }
+    );
+
+
+    /* braços */
+
+    const armMaterial =
+        material(
+            shirtColor,
+            .78
+        );
+
+
+    [-.56, .56].forEach(
+        ax => {
+
+            const arm =
+                new THREE.Mesh(
+                    new THREE.CylinderGeometry(
+                        .11,
+                        .13,
+                        1,
+                        12
+                    ),
+
+                    armMaterial
+                );
+
+
+            arm.position.set(
+                ax,
+                1.82,
+                0
+            );
+
+
+            arm.rotation.z =
+                ax > 0
+                    ? -.08
+                    : .08;
+
+
+            arm.castShadow = true;
+
+            group.add(arm);
+        }
+    );
+
+
+    group.position.set(
+        x,
+        y,
+        z
+    );
+
+
+    scene.add(group);
+
+
+    group.userData.character =
+        name;
+
+
+    group.userData.interact =
+        true;
+
+
+    characters.push(group);
+}
+
+
+/* =========================================================
+   OBJETOS
+========================================================= */
+
+function createObjects() {
+
+    createTicketObject(
+        -2,
+        .25,
+        8
+    );
+
+
+    createKeyObject(
+        9,
         .45,
-        .04,
-        mat.darkMetal,
-        0,
-        .2,
-        -.2,
-        clockGroup
+        -16
     );
 
-    hand2.rotation.z = 1;
 
-    scene.add(clockGroup);
+    createCoinObject(
+        -8,
+        .25,
+        -35
+    );
+
+
+    createHospitalCard(
+        -13,
+        .35,
+        -35
+    );
+}
+
+
+/* =========================================================
+   BILHETE 3D
+========================================================= */
+
+function createTicketObject(
+    x,
+    y,
+    z
+) {
+
+    const group =
+        new THREE.Group();
+
+
+    const paper =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                1.3,
+                .04,
+                .65
+            ),
+
+            material(
+                0xe0cf9e,
+                .9
+            )
+        );
+
+
+    group.add(paper);
+
+
+    const stripe =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                1.15,
+                .012,
+                .09
+            ),
+
+            material(
+                0x25231f,
+                .7
+            )
+        );
+
+
+    stripe.position.y =
+        .03;
+
+
+    stripe.position.z =
+        -.14;
+
+
+    group.add(stripe);
+
+
+    const number =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                .35,
+                .012,
+                .06
+            ),
+
+            material(
+                0x8b252b,
+                .7
+            )
+        );
+
+
+    number.position.set(
+        -.3,
+        .031,
+        .08
+    );
+
+
+    group.add(number);
+
+
+    group.position.set(
+        x,
+        y,
+        z
+    );
+
+
+    group.rotation.y =
+        .3;
+
+
+    scene.add(group);
+
+
+    group.userData.objectId =
+        "ticket";
+
+
+    group.userData.interact =
+        true;
+}
+
+
+/* =========================================================
+   CHAVE
+========================================================= */
+
+function createKeyObject(
+    x,
+    y,
+    z
+) {
+
+    const group =
+        new THREE.Group();
+
+
+    const keyMaterial =
+        material(
+            COLORS.brass,
+            .35,
+            .8
+        );
+
+
+    const ring =
+        new THREE.Mesh(
+            new THREE.TorusGeometry(
+                .22,
+                .07,
+                10,
+                24
+            ),
+
+            keyMaterial
+        );
+
+
+    ring.rotation.x =
+        Math.PI / 2;
+
+
+    group.add(ring);
+
+
+    const shaft =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                .75,
+                .09,
+                .1
+            ),
+
+            keyMaterial
+        );
+
+
+    shaft.position.x =
+        .45;
+
+
+    group.add(shaft);
+
+
+    const teeth =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                .3,
+                .18,
+                .1
+            ),
+
+            keyMaterial
+        );
+
+
+    teeth.position.x =
+        .8;
+
+
+    group.add(teeth);
+
+
+    group.position.set(
+        x,
+        y,
+        z
+    );
+
+
+    group.rotation.y =
+        -.5;
+
+
+    scene.add(group);
+
+
+    group.userData.objectId =
+        "key";
+
+
+    group.userData.interact =
+        true;
+}
+
+
+/* =========================================================
+   MOEDA
+========================================================= */
+
+function createCoinObject(
+    x,
+    y,
+    z
+) {
+
+    const group =
+        new THREE.Group();
+
+
+    const coinMaterial =
+        material(
+            0xa88b4e,
+            .3,
+            .8
+        );
+
+
+    const coin =
+        new THREE.Mesh(
+            new THREE.CylinderGeometry(
+                .3,
+                .3,
+                .08,
+                32
+            ),
+
+            coinMaterial
+        );
+
+
+    coin.rotation.x =
+        Math.PI / 2;
+
+
+    group.add(coin);
+
+
+    const symbol =
+        new THREE.Mesh(
+            new THREE.TorusGeometry(
+                .12,
+                .025,
+                8,
+                20
+            ),
+
+            material(
+                0x5b4823,
+                .5,
+                .6
+            )
+        );
+
+
+    symbol.rotation.x =
+        Math.PI / 2;
+
+
+    symbol.position.z =
+        -.05;
+
+
+    group.add(symbol);
+
+
+    group.position.set(
+        x,
+        y,
+        z
+    );
+
+
+    scene.add(group);
+
+
+    group.userData.objectId =
+        "coin";
+
+
+    group.userData.interact =
+        true;
+}
+
+
+/* =========================================================
+   CARTÃO DO HOSPITAL
+========================================================= */
+
+function createHospitalCard(
+    x,
+    y,
+    z
+) {
+
+    const card =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                1.2,
+                .035,
+                .7
+            ),
+
+            material(
+                0xe4e6e1,
+                .75
+            )
+        );
+
+
+    card.position.set(
+        x,
+        y,
+        z
+    );
+
+
+    card.rotation.y =
+        .2;
+
+
+    scene.add(card);
+
+
+    card.userData.objectId =
+        "hospital";
+
+
+    card.userData.interact =
+        true;
 }
 
 
@@ -1111,42 +2396,66 @@ function createStationDecorations() {
 
 function createRain() {
 
-    const count = 1500;
+    const count = 350;
 
-    const positions = new Float32Array(
-        count * 3
-    );
 
-    for (let i = 0; i < count; i++) {
+    const positions =
+        new Float32Array(
+            count * 3
+        );
+
+
+    for (
+        let i = 0;
+        i < count;
+        i++
+    ) {
 
         positions[i * 3] =
-            (Math.random() - .5) * 65;
+            (Math.random() - .5) * 80;
 
         positions[i * 3 + 1] =
-            Math.random() * 20;
+            Math.random() * 35;
 
         positions[i * 3 + 2] =
-            Math.random() * 100 - 80;
+            -80 +
+            Math.random() * 100;
     }
+
 
     const geometry =
         new THREE.BufferGeometry();
 
+
     geometry.setAttribute(
         "position",
+
         new THREE.BufferAttribute(
             positions,
             3
         )
     );
 
+
     const materialRain =
         new THREE.PointsMaterial({
-            color: 0xb8c6d9,
-            size: .035,
-            transparent: true,
-            opacity: .38
+
+            color:
+                0xaeb9c9,
+
+            size:
+                .025,
+
+            transparent:
+                true,
+
+            opacity:
+                .18,
+
+            depthWrite:
+                false
         });
+
 
     const rain =
         new THREE.Points(
@@ -1154,1745 +2463,662 @@ function createRain() {
             materialRain
         );
 
-    rain.userData.isRain = true;
 
     scene.add(rain);
-
-    environmentObjects.push(rain);
 }
 
 
 /* =========================================================
-   PERSONAGENS
+   CONTROLES
 ========================================================= */
 
-function createHuman({
-    name,
-    x,
-    z,
-    shirtMaterial,
-    pantsMaterial,
-    hairMaterial,
-    skinMaterial = mat.skin
-}) {
+function setupControls() {
 
-    const group = new THREE.Group();
+    window.addEventListener(
+        "keydown",
+        event => {
 
-    group.position.set(
-        x,
-        0,
-        z
-    );
+            const key =
+                event.key.toLowerCase();
 
-    group.userData.name = name;
 
-    // pernas
+            if (key === "w")
+                keys.w = true;
 
-    const legL = new THREE.Mesh(
-        new THREE.CapsuleGeometry(
-            .17,
-            .75,
-            5,
-            12
-        ),
-        pantsMaterial
-    );
+            if (key === "a")
+                keys.a = true;
 
-    legL.position.set(
-        -.2,
-        .65,
-        0
-    );
+            if (key === "s")
+                keys.s = true;
 
-    group.add(legL);
+            if (key === "d")
+                keys.d = true;
 
-    const legR = new THREE.Mesh(
-        new THREE.CapsuleGeometry(
-            .17,
-            .75,
-            5,
-            12
-        ),
-        pantsMaterial
-    );
+            if (key === "shift")
+                keys.shift = true;
 
-    legR.position.set(
-        .2,
-        .65,
-        0
-    );
 
-    group.add(legR);
+            if (
+                key === "f" &&
+                state.started
+            ) {
 
+                toggleFlashlight();
+            }
 
-    // sapatos
 
-    const shoeL = new THREE.Mesh(
-        new THREE.BoxGeometry(
-            .34,
-            .16,
-            .65
-        ),
-        mat.shoes
-    );
+            if (
+                key === "e" &&
+                state.started
+            ) {
 
-    shoeL.position.set(
-        -.2,
-        .18,
-        -.12
-    );
+                interact();
+            }
 
-    group.add(shoeL);
 
-    const shoeR = new THREE.Mesh(
-        new THREE.BoxGeometry(
-            .34,
-            .16,
-            .65
-        ),
-        mat.shoes
-    );
+            if (
+                key === "i" &&
+                state.started
+            ) {
 
-    shoeR.position.set(
-        .2,
-        .18,
-        -.12
-    );
+                toggleModal(
+                    "inventoryModal"
+                );
+            }
 
-    group.add(shoeR);
 
+            if (
+                key === "m" &&
+                state.started
+            ) {
 
-    // torso
-
-    const torso = new THREE.Mesh(
-        new THREE.CapsuleGeometry(
-            .42,
-            .65,
-            6,
-            16
-        ),
-        shirtMaterial
-    );
-
-    torso.position.y = 1.45;
-
-    group.add(torso);
-
-
-    // pescoço
-
-    cylinder(
-        .13,
-        .18,
-        skinMaterial,
-        0,
-        1.95,
-        0,
-        16,
-        group
-    );
-
-
-    // cabeça
-
-    const head = sphere(
-        .39,
-        skinMaterial,
-        0,
-        2.35,
-        0,
-        group
-    );
-
-
-    // cabelo
-
-    const hair = new THREE.Mesh(
-        new THREE.SphereGeometry(
-            .405,
-            24,
-            16,
-            0,
-            Math.PI * 2,
-            0,
-            Math.PI * .62
-        ),
-        hairMaterial
-    );
-
-    hair.position.set(
-        0,
-        2.46,
-        .01
-    );
-
-    group.add(hair);
-
-
-    // olhos
-
-    for (const eyeX of [-.13, .13]) {
-
-        sphere(
-            .035,
-            mat.white,
-            eyeX,
-            2.38,
-            -.36,
-            group
-        );
-
-        sphere(
-            .018,
-            mat.darkMetal,
-            eyeX,
-            2.38,
-            -.393,
-            group
-        );
-    }
-
-
-    // nariz
-
-    const nose = new THREE.Mesh(
-        new THREE.ConeGeometry(
-            .055,
-            .13,
-            8
-        ),
-        skinMaterial
-    );
-
-    nose.rotation.x = Math.PI / 2;
-
-    nose.position.set(
-        0,
-        2.28,
-        -.39
-    );
-
-    group.add(nose);
-
-
-    // boca
-
-    const mouth = new THREE.Mesh(
-        new THREE.BoxGeometry(
-            .12,
-            .018,
-            .018
-        ),
-        material(0x5d302f)
-    );
-
-    mouth.position.set(
-        0,
-        2.16,
-        -.39
-    );
-
-    group.add(mouth);
-
-
-    // braços
-
-    for (const side of [-1, 1]) {
-
-        const arm = new THREE.Mesh(
-            new THREE.CapsuleGeometry(
-                .12,
-                .62,
-                5,
-                12
-            ),
-            shirtMaterial
-        );
-
-        arm.position.set(
-            side * .52,
-            1.43,
-            0
-        );
-
-        arm.rotation.z =
-            side * -.12;
-
-        group.add(arm);
-
-
-        // mão
-
-        sphere(
-            .13,
-            skinMaterial,
-            side * .54,
-            .98,
-            0,
-            group
-        );
-    }
-
-
-    // pequeno detalhe de roupa
-
-    box(
-        .3,
-        .12,
-        .03,
-        mat.white,
-        0,
-        1.6,
-        -.43,
-        group
-    );
-
-
-    scene.add(group);
-
-    npcs.push({
-        name,
-        object: group,
-        talked: false
-    });
-
-    return group;
-}
-
-
-/* =========================================================
-   PERSONAGENS DA HISTÓRIA
-========================================================= */
-
-function createCharacters() {
-
-    createHuman({
-        name: "Olivia",
-        x: -6,
-        z: -1,
-        shirtMaterial: material(0x424c5d),
-        pantsMaterial: material(0x1c2028),
-        hairMaterial: mat.hairLight,
-        skinMaterial: mat.skinLight
-    });
-
-
-    createHuman({
-        name: "Condutor",
-        x: 8,
-        z: -18,
-        shirtMaterial: material(0x202328),
-        pantsMaterial: material(0x111216),
-        hairMaterial: mat.hair,
-        skinMaterial: mat.skin
-    });
-
-
-    createHuman({
-        name: "Kaio",
-        x: -8,
-        z: -42,
-        shirtMaterial: material(0x66727b),
-        pantsMaterial: material(0x262b30),
-        hairMaterial: mat.hair,
-        skinMaterial: mat.skin
-    });
-
-
-    createHuman({
-        name: "Senhora da Cidade Antiga",
-        x: 10,
-        z: -62,
-        shirtMaterial: material(0x514b57),
-        pantsMaterial: material(0x302d36),
-        hairMaterial: material(0x77716e),
-        skinMaterial: mat.skinLight
-    });
-}
-
-
-/* =========================================================
-   OBJETOS / ITENS
-========================================================= */
-
-function createItems() {
-
-    createTicket(
-        -1.5,
-        .35,
-        4
-    );
-
-    createKey(
-        5,
-        .45,
-        -34
-    );
-
-    createCoin(
-        -6,
-        .25,
-        -54
-    );
-}
-
-
-/* =========================================================
-   BILHETE 3D
-========================================================= */
-
-function createTicket(x, y, z) {
-
-    const group = new THREE.Group();
-
-    group.position.set(
-        x,
-        y,
-        z
-    );
-
-    const paper = new THREE.Mesh(
-        new THREE.BoxGeometry(
-            1.8,
-            .06,
-            .85
-        ),
-        new THREE.MeshStandardMaterial({
-            color: 0xd3c29c,
-            roughness: .9
-        })
-    );
-
-    group.add(paper);
-
-
-    // faixa vermelha
-
-    box(
-        1.7,
-        .065,
-        .13,
-        mat.red,
-        0,
-        .05,
-        -.2,
-        group
-    );
-
-
-    // letras
-
-    const canvas =
-        document.createElement("canvas");
-
-    canvas.width = 512;
-    canvas.height = 256;
-
-    const ctx =
-        canvas.getContext("2d");
-
-    ctx.fillStyle = "#302b21";
-    ctx.font = "bold 42px Arial";
-    ctx.textAlign = "center";
-
-    ctx.fillText(
-        "ÚLTIMO TREM",
-        256,
-        90
-    );
-
-    ctx.font = "bold 28px monospace";
-
-    ctx.fillText(
-        "00:00  •  LINHA 0",
-        256,
-        145
-    );
-
-    ctx.font = "20px Arial";
-
-    ctx.fillText(
-        "SALA 0",
-        256,
-        190
-    );
-
-    const texture =
-        new THREE.CanvasTexture(canvas);
-
-    const face =
-        new THREE.Mesh(
-            new THREE.PlaneGeometry(
-                1.7,
-                .75
-            ),
-            new THREE.MeshBasicMaterial({
-                map: texture,
-                transparent: true
-            })
-        );
-
-    face.position.z = -.44;
-
-    face.rotation.x = -Math.PI / 2;
-
-    group.add(face);
-
-
-    // iluminação
-
-    const light =
-        new THREE.PointLight(
-            0xffe2a5,
-            1.2,
-            4
-        );
-
-    light.position.y = .5;
-
-    group.add(light);
-
-
-    group.userData.itemType = "ticket";
-    group.userData.interaction =
-        "Pegar o bilhete";
-
-    scene.add(group);
-
-    pickups.push(group);
-}
-
-
-/* =========================================================
-   CHAVE 3D
-========================================================= */
-
-function createKey(x, y, z) {
-
-    const group = new THREE.Group();
-
-    group.position.set(
-        x,
-        y,
-        z
-    );
-
-    const shaft = new THREE.Mesh(
-        new THREE.BoxGeometry(
-            .18,
-            .15,
-            1.5
-        ),
-        mat.brass
-    );
-
-    shaft.rotation.y = .5;
-
-    group.add(shaft);
-
-
-    const ring =
-        new THREE.Mesh(
-            new THREE.TorusGeometry(
-                .38,
-                .1,
-                12,
-                24
-            ),
-            mat.brass
-        );
-
-    ring.rotation.x = Math.PI / 2;
-
-    ring.position.set(
-        -.55,
-        0,
-        .3
-    );
-
-    group.add(ring);
-
-
-    const tooth1 = box(
-        .22,
-        .14,
-        .28,
-        mat.brass,
-        .48,
-        0,
-        -.1,
-        group
-    );
-
-    tooth1.rotation.y = .5;
-
-
-    const tooth2 = box(
-        .22,
-        .14,
-        .25,
-        mat.brass,
-        .66,
-        0,
-        -.1,
-        group
-    );
-
-    tooth2.rotation.y = .5;
-
-
-    group.userData.itemType = "key";
-    group.userData.interaction =
-        "Pegar a chave antiga";
-
-    scene.add(group);
-
-    pickups.push(group);
-}
-
-
-/* =========================================================
-   MOEDA 3D
-========================================================= */
-
-function createCoin(x, y, z) {
-
-    const group = new THREE.Group();
-
-    group.position.set(
-        x,
-        y,
-        z
-    );
-
-    const coin =
-        new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                .42,
-                .42,
-                .12,
-                32
-            ),
-            mat.brass
-        );
-
-    coin.rotation.x =
-        Math.PI / 2;
-
-    group.add(coin);
-
-
-    const center =
-        new THREE.Mesh(
-            new THREE.CircleGeometry(
-                .28,
-                32
-            ),
-            material(0x80652b)
-        );
-
-    center.position.z = .07;
-
-    group.add(center);
-
-
-    const innerRing =
-        new THREE.Mesh(
-            new THREE.TorusGeometry(
-                .31,
-                .025,
-                8,
-                32
-            ),
-            mat.gold
-                ? mat.gold
-                : mat.brass
-        );
-
-    innerRing.position.z = .08;
-
-    group.add(innerRing);
-
-
-    group.userData.itemType = "coin";
-    group.userData.interaction =
-        "Pegar a moeda estranha";
-
-    scene.add(group);
-
-    pickups.push(group);
-}
-
-
-/* =========================================================
-   EVENTOS
-========================================================= */
-
-function setupEvents() {
-
-    $("startButton").addEventListener(
-        "click",
-        startGame
-    );
-
-    $("continueButton").addEventListener(
-        "click",
-        continueGame
-    );
-
-    $("deleteSaveButton").addEventListener(
-        "click",
-        deleteSave
-    );
-
-    $("flashlightButton").addEventListener(
-        "click",
-        toggleFlashlight
-    );
-
-    $("inventoryButton").addEventListener(
-        "click",
-        openInventory
-    );
-
-    $("missionsButton").addEventListener(
-        "click",
-        openMissions
-    );
-
-    $("dialogueNext").addEventListener(
-        "click",
-        nextDialogue
-    );
-
-    $("endingRestart").addEventListener(
-        "click",
-        () => {
-            endingModal.classList.add("hidden");
-            location.reload();
+                toggleModal(
+                    "missionsModal"
+                );
+            }
         }
     );
 
 
-    document.querySelectorAll(
-        "[data-close]"
-    ).forEach(button => {
-
-        button.addEventListener(
-            "click",
-            () => {
-
-                const id =
-                    button.dataset.close;
-
-                $(id).classList.add(
-                    "hidden"
-                );
-            }
-        );
-    });
-
-
-    $("useItemButton").addEventListener(
-        "click",
-        useSelectedItem
-    );
-
-
-    $("puzzleSubmit").addEventListener(
-        "click",
-        solvePuzzle
-    );
-
-
-    window.addEventListener(
-        "keydown",
-        onKeyDown
-    );
-
     window.addEventListener(
         "keyup",
-        onKeyUp
+        event => {
+
+            const key =
+                event.key.toLowerCase();
+
+
+            if (key === "w")
+                keys.w = false;
+
+            if (key === "a")
+                keys.a = false;
+
+            if (key === "s")
+                keys.s = false;
+
+            if (key === "d")
+                keys.d = false;
+
+            if (key === "shift")
+                keys.shift = false;
+        }
     );
 
 
-    window.addEventListener(
-        "resize",
-        onResize
+    renderer.domElement.addEventListener(
+        "click",
+        () => {
+
+            if (
+                state.started &&
+                !anyModalOpen()
+            ) {
+
+                renderer.domElement.requestPointerLock();
+            }
+        }
     );
 
 
-    // Mobile
+    document.addEventListener(
+        "pointerlockchange",
+        () => {
 
-    bindMobileButton(
-        "mobileUp",
-        "KeyW"
-    );
-
-    bindMobileButton(
-        "mobileLeft",
-        "KeyA"
-    );
-
-    bindMobileButton(
-        "mobileDown",
-        "KeyS"
-    );
-
-    bindMobileButton(
-        "mobileRight",
-        "KeyD"
+            mouseLocked =
+                document.pointerLockElement ===
+                renderer.domElement;
+        }
     );
 
 
-    $("mobileFlashlight")
+    document.addEventListener(
+        "mousemove",
+        event => {
+
+            if (!mouseLocked)
+                return;
+
+
+            yaw -=
+                event.movementX *
+                .0022;
+
+
+            pitch -=
+                event.movementY *
+                .0022;
+
+
+            pitch =
+                Math.max(
+                    -1.45,
+                    Math.min(
+                        1.45,
+                        pitch
+                    )
+                );
+
+
+            camera.rotation.order =
+                "YXZ";
+
+
+            camera.rotation.y =
+                yaw;
+
+
+            camera.rotation.x =
+                pitch;
+        }
+    );
+}
+
+
+/* =========================================================
+   BOTÕES
+========================================================= */
+
+function setupButtons() {
+
+    document
+        .getElementById("newGameBtn")
+        .addEventListener(
+            "click",
+            startNewGame
+        );
+
+
+    document
+        .getElementById("continueBtn")
+        .addEventListener(
+            "click",
+            continueGame
+        );
+
+
+    document
+        .getElementById("deleteSaveBtn")
+        .addEventListener(
+            "click",
+            deleteSave
+        );
+
+
+    document
+        .getElementById("flashlightButton")
         .addEventListener(
             "click",
             toggleFlashlight
         );
 
-    $("mobileInteract")
+
+    document
+        .getElementById("inventoryButton")
         .addEventListener(
             "click",
-            interact
+            () =>
+                toggleModal(
+                    "inventoryModal"
+                )
         );
 
-    $("mobileInventory")
+
+    document
+        .getElementById("missionsButton")
         .addEventListener(
             "click",
-            openInventory
-        );
-}
-
-
-/* =========================================================
-   CONTROLES MOBILE
-========================================================= */
-
-function bindMobileButton(
-    id,
-    key
-) {
-
-    const button = $(id);
-
-    button.addEventListener(
-        "touchstart",
-        event => {
-
-            event.preventDefault();
-
-            keys[key] = true;
-        }
-    );
-
-    button.addEventListener(
-        "touchend",
-        event => {
-
-            event.preventDefault();
-
-            keys[key] = false;
-        }
-    );
-
-    button.addEventListener(
-        "mousedown",
-        () => {
-            keys[key] = true;
-        }
-    );
-
-    button.addEventListener(
-        "mouseup",
-        () => {
-            keys[key] = false;
-        }
-    );
-
-    button.addEventListener(
-        "mouseleave",
-        () => {
-            keys[key] = false;
-        }
-    );
-}
-
-
-/* =========================================================
-   TECLADO
-========================================================= */
-
-function onKeyDown(event) {
-
-    keys[event.code] = true;
-
-    if (
-        event.code === "KeyF"
-    ) {
-        toggleFlashlight();
-    }
-
-    if (
-        event.code === "KeyE"
-    ) {
-        interact();
-    }
-
-    if (
-        event.code === "KeyI"
-    ) {
-        openInventory();
-    }
-
-    if (
-        event.code === "KeyM"
-    ) {
-        openMissions();
-    }
-
-    if (
-        event.code === "Escape"
-    ) {
-        closeAllModals();
-    }
-}
-
-
-function onKeyUp(event) {
-
-    keys[event.code] = false;
-}
-
-
-/* =========================================================
-   INICIAR JOGO
-========================================================= */
-
-function startGame() {
-
-    mainMenu.classList.add(
-        "hidden"
-    );
-
-    gameContainer.classList.remove(
-        "hidden"
-    );
-
-    hud.classList.remove(
-        "hidden"
-    );
-
-    if (
-        "ontouchstart" in window
-    ) {
-        $("mobileControls")
-            .classList.remove(
-                "hidden"
-            );
-    }
-
-    player.x = 0;
-    player.z = 8;
-
-    camera.position.set(
-        0,
-        1.72,
-        8
-    );
-
-    updateObjective();
-
-    saveGame();
-
-    animate();
-}
-
-
-function continueGame() {
-
-    loadGame();
-
-    mainMenu.classList.add(
-        "hidden"
-    );
-
-    gameContainer.classList.remove(
-        "hidden"
-    );
-
-    hud.classList.remove(
-        "hidden"
-    );
-
-    if (
-        "ontouchstart" in window
-    ) {
-        $("mobileControls")
-            .classList.remove(
-                "hidden"
-            );
-    }
-
-    camera.position.set(
-        player.x,
-        1.72,
-        player.z
-    );
-
-    updateObjective();
-
-    animate();
-}
-
-
-/* =========================================================
-   MOVIMENTO
-========================================================= */
-
-function updateMovement(delta) {
-
-    if (
-        !controls ||
-        !controls.isLocked
-    ) {
-        return;
-    }
-
-
-    let forward = 0;
-    let sideways = 0;
-
-
-    // W / seta para cima
-
-    if (
-        keys["KeyW"] ||
-        keys["ArrowUp"]
-    ) {
-        forward += 1;
-    }
-
-
-    // S / seta para baixo
-
-    if (
-        keys["KeyS"] ||
-        keys["ArrowDown"]
-    ) {
-        forward -= 1;
-    }
-
-
-    // A / seta para esquerda
-    // CORRIGIDO
-
-    if (
-        keys["KeyA"] ||
-        keys["ArrowLeft"]
-    ) {
-        sideways -= 1;
-    }
-
-
-    // D / seta para direita
-    // CORRIGIDO
-
-    if (
-        keys["KeyD"] ||
-        keys["ArrowRight"]
-    ) {
-        sideways += 1;
-    }
-
-
-    if (
-        forward === 0 &&
-        sideways === 0
-    ) {
-        return;
-    }
-
-
-    const sprint =
-        keys["ShiftLeft"] ||
-        keys["ShiftRight"];
-
-
-    const speed =
-        sprint
-            ? 6
-            : 3.2;
-
-
-    const direction =
-        new THREE.Vector3(
-            sideways,
-            0,
-            -forward
+            () =>
+                toggleModal(
+                    "missionsModal"
+                )
         );
 
 
-    direction.normalize();
-
-
-    const move =
-        direction.multiplyScalar(
-            speed * delta
+    document
+        .getElementById("closeInventory")
+        .addEventListener(
+            "click",
+            () =>
+                closeModal(
+                    "inventoryModal"
+                )
         );
 
 
-    controls.moveRight(
-        move.x
-    );
-
-    controls.moveForward(
-        -move.z
-    );
-
-
-    // Limites da estação
-
-    camera.position.x =
-        THREE.MathUtils.clamp(
-            camera.position.x,
-            -27,
-            27
-        );
-
-    camera.position.z =
-        THREE.MathUtils.clamp(
-            camera.position.z,
-            -76,
-            16
+    document
+        .getElementById("closeMissions")
+        .addEventListener(
+            "click",
+            () =>
+                closeModal(
+                    "missionsModal"
+                )
         );
 
 
-    player.x =
-        camera.position.x;
-
-    player.z =
-        camera.position.z;
-
-
-    if (sprint) {
-
-        player.energy =
-            Math.max(
-                0,
-                player.energy -
-                delta * 4
-            );
-
-    } else {
-
-        player.energy =
-            Math.min(
-                100,
-                player.energy +
-                delta * 1.5
-            );
-    }
-
-
-    energyValue.textContent =
-        Math.round(
-            player.energy
-        );
-}
-
-
-/* =========================================================
-   INTERAÇÃO
-========================================================= */
-
-function findClosestInteraction() {
-
-    currentInteractable = null;
-
-    let closestDistance = Infinity;
-
-
-    // NPCs
-
-    for (const npc of npcs) {
-
-        const distance =
-            camera.position.distanceTo(
-                npc.object.position
-            );
-
-        if (
-            distance < 3.2 &&
-            distance < closestDistance
-        ) {
-
-            closestDistance = distance;
-
-            currentInteractable = {
-                type: "npc",
-                object: npc.object,
-                npc
-            };
-        }
-    }
-
-
-    // pickups
-
-    for (const pickup of pickups) {
-
-        if (
-            !pickup.parent
-        ) {
-            continue;
-        }
-
-        const distance =
-            camera.position.distanceTo(
-                pickup.position
-            );
-
-        if (
-            distance < 2.7 &&
-            distance < closestDistance
-        ) {
-
-            closestDistance = distance;
-
-            currentInteractable = {
-                type: "pickup",
-                object: pickup
-            };
-        }
-    }
-
-
-    // terminal da Sala 0
-
-    const terminal =
-        scene.getObjectByName(
-            "hospitalTerminal"
-        );
-
-    if (terminal) {
-
-        const distance =
-            camera.position.distanceTo(
-                terminal.position
-            );
-
-        if (
-            distance < 3 &&
-            distance < closestDistance
-        ) {
-
-            currentInteractable = {
-                type: "terminal",
-                object: terminal
-            };
-        }
-    }
-
-
-    if (
-        currentInteractable
-    ) {
-
-        interactionHint.classList.remove(
-            "hidden"
+    document
+        .getElementById("closeItem")
+        .addEventListener(
+            "click",
+            () =>
+                closeModal(
+                    "itemModal"
+                )
         );
 
 
-        if (
-            currentInteractable.type === "npc"
-        ) {
-
-            interactionText.textContent =
-                `Conversar com ${currentInteractable.npc.name}`;
-
-        } else if (
-            currentInteractable.type === "pickup"
-        ) {
-
-            const type =
-                currentInteractable.object
-                    .userData.itemType;
-
-            const names = {
-                ticket: "Pegar bilhete",
-                key: "Pegar chave",
-                coin: "Pegar moeda"
-            };
-
-            interactionText.textContent =
-                names[type] || "Pegar objeto";
-
-        } else {
-
-            interactionText.textContent =
-                "Examinar terminal";
-        }
-
-    } else {
-
-        interactionHint.classList.add(
-            "hidden"
-        );
-    }
-}
-
-
-/* =========================================================
-   INTERAGIR
-========================================================= */
-
-function interact() {
-
-    if (
-        !currentInteractable
-    ) {
-        return;
-    }
-
-
-    const interaction =
-        currentInteractable;
-
-
-    if (
-        interaction.type === "npc"
-    ) {
-
-        talkTo(
-            interaction.npc
+    document
+        .getElementById("closeItemBottom")
+        .addEventListener(
+            "click",
+            () =>
+                closeModal(
+                    "itemModal"
+                )
         );
 
-        return;
-    }
 
-
-    if (
-        interaction.type === "pickup"
-    ) {
-
-        collectItem(
-            interaction.object
+    document
+        .getElementById("closeTicket")
+        .addEventListener(
+            "click",
+            () =>
+                closeModal(
+                    "ticketModal"
+                )
         );
 
-        return;
-    }
 
-
-    if (
-        interaction.type === "terminal"
-    ) {
-
-        openPuzzle();
-
-        return;
-    }
-}
-
-
-/* =========================================================
-   PEGAR ITEM
-========================================================= */
-
-function collectItem(object) {
-
-    const type =
-        object.userData.itemType;
-
-
-    if (
-        type === "ticket"
-    ) {
-
-        inventory.ticket = true;
-
-        addClue(
-            "O bilhete impossível menciona a Sala 0."
+    document
+        .getElementById("closeTicketBottom")
+        .addEventListener(
+            "click",
+            () =>
+                closeModal(
+                    "ticketModal"
+                )
         );
 
-        completeMission(
-            "A estação vazia"
+
+    document
+        .getElementById("closePuzzle")
+        .addEventListener(
+            "click",
+            () =>
+                closeModal(
+                    "puzzleModal"
+                )
         );
 
-        activateMission(
-            "A mulher na plataforma"
+
+    document
+        .getElementById("closeTrain")
+        .addEventListener(
+            "click",
+            () =>
+                closeModal(
+                    "trainModal"
+                )
         );
 
-        showTicket();
 
-    } else if (
-        type === "key"
-    ) {
-
-        inventory.key = true;
-
-        addClue(
-            "A chave possui o mesmo símbolo encontrado na entrada dos túneis."
+    document
+        .getElementById("dialogueNext")
+        .addEventListener(
+            "click",
+            nextDialogue
         );
 
-        activateMission(
-            "Debaixo da cidade"
+
+    document
+        .getElementById("useItemButton")
+        .addEventListener(
+            "click",
+            useSelectedItem
         );
 
-        showItem(
-            "key"
+
+    document
+        .getElementById("puzzleSubmit")
+        .addEventListener(
+            "click",
+            solvePuzzle
         );
 
-    } else if (
-        type === "coin"
-    ) {
 
-        inventory.coin = true;
-
-        addClue(
-            "A moeda tem o número 0 gravado no centro."
-        );
-
-        showItem(
-            "coin"
-        );
-    }
-
-
-    scene.remove(
-        object
-    );
-
-
-    saveGame();
-
-    currentInteractable = null;
-
-    interactionHint.classList.add(
-        "hidden"
-    );
-}
-
-
-/* =========================================================
-   INVENTÁRIO
-========================================================= */
-
-function openInventory() {
-
-    if (
-        mainMenu.classList.contains(
-            "hidden"
-        ) === false
-    ) {
-        return;
-    }
-
-    renderInventory();
-
-    inventoryModal.classList.remove(
-        "hidden"
-    );
-}
-
-
-function renderInventory() {
-
-    const grid =
-        $("inventoryGrid");
-
-    grid.innerHTML = "";
-
-
-    const items = [
-
-        {
-            id: "ticket",
-            name: "Bilhete impossível",
-            icon: "🎫",
-            description:
-                "Um bilhete que não deveria existir."
-        },
-
-        {
-            id: "flashlight",
-            name: "Lanterna",
-            icon: "🔦",
-            description:
-                "Sua principal fonte de luz."
-        },
-
-        {
-            id: "key",
-            name: "Chave antiga",
-            icon: "🗝️",
-            description:
-                "Parece abrir alguma coisa nos túneis."
-        },
-
-        {
-            id: "coin",
-            name: "Moeda estranha",
-            icon: "🪙",
-            description:
-                "Uma moeda marcada com o número 0."
-        },
-
-        {
-            id: "hospitalCard",
-            name: "Cartão hospitalar",
-            icon: "🏥",
-            description:
-                "Um cartão ligado ao Hospital São Lucas."
-        },
-
-        {
-            id: "conductorBadge",
-            name: "Insígnia do condutor",
-            icon: "🎖️",
-            description:
-                "Pertence ao funcionário do Último Trem."
-        }
-    ];
-
-
-    for (const item of items) {
-
-        if (
-            !inventory[item.id]
-        ) {
-            continue;
-        }
-
-
-        const card =
-            document.createElement(
-                "div"
-            );
-
-        card.className =
-            "inventory-card";
-
-
-        card.innerHTML = `
-            <div class="inventory-icon">
-                ${item.icon}
-            </div>
-
-            <div>
-                <h3>${item.name}</h3>
-                <p>${item.description}</p>
-            </div>
-        `;
-
-
-        card.addEventListener(
+    document
+        .getElementById("endingRestart")
+        .addEventListener(
             "click",
             () => {
 
-                showItem(
-                    item.id
+                closeModal(
+                    "endingModal"
+                );
+
+                startNewGame();
+            }
+        );
+
+
+    document
+        .querySelectorAll(
+            ".train-destinations button"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        travelTo(
+                            button.dataset.destination
+                        );
+                    }
                 );
             }
         );
 
 
-        grid.appendChild(card);
+    setupMobileControls();
+}
+
+
+/* =========================================================
+   NOVO JOGO
+========================================================= */
+
+function startNewGame() {
+
+    localStorage.removeItem(
+        "ultimoTremSave"
+    );
+
+
+    resetState();
+
+
+    state.started = true;
+
+
+    menuScreen.classList.add(
+        "hidden"
+    );
+
+
+    gameContainer.classList.remove(
+        "hidden"
+    );
+
+
+    hud.classList.remove(
+        "hidden"
+    );
+
+
+    player.x = 0;
+    player.z = 14;
+
+
+    camera.position.set(
+        0,
+        1.72,
+        14
+    );
+
+
+    yaw = 0;
+    pitch = 0;
+
+
+    camera.rotation.set(
+        0,
+        0,
+        0
+    );
+
+
+    updateHUD();
+
+
+    showDialogue(
+        "Yuri",
+        "👤",
+        [
+            "Onde eu estou...?",
+            "Eu lembro da cidade. Lembro de estar voltando para casa.",
+            "Mas não lembro de ter entrado nesta estação.",
+            "O relógio está marcando meia-noite... e não há ninguém aqui.",
+            "Preciso descobrir o que aconteceu."
+        ]
+    );
+
+
+    saveGame();
+}
+
+
+/* =========================================================
+   RESET
+========================================================= */
+
+function resetState() {
+
+    state.currentArea =
+        "station";
+
+    state.timeMinutes =
+        0;
+
+    state.clues =
+        0;
+
+    state.coins =
+        0;
+
+    state.hasTicket =
+        true;
+
+    state.hasKey =
+        false;
+
+    state.hasCoin =
+        false;
+
+    state.hasMasterKey =
+        false;
+
+    state.metOlivia =
+        false;
+
+    state.metKaio =
+        false;
+
+    state.metConductor =
+        false;
+
+    state.talkedOldWoman =
+        false;
+
+    state.hospitalSolved =
+        false;
+
+    state.tunnelSolved =
+        false;
+
+    state.roomZeroReached =
+        false;
+
+    state.ticketRead =
+        false;
+
+    state.flashlightUsed =
+        false;
+
+    state.ending =
+        false;
+
+
+    player.health =
+        100;
+
+    player.energy =
+        100;
+
+
+    flashlightOn =
+        true;
+
+    flashlight.visible =
+        true;
+
+    flashlightGlow.visible =
+        true;
+}
+
+
+/* =========================================================
+   CONTINUAR
+========================================================= */
+
+function continueGame() {
+
+    const saved =
+        localStorage.getItem(
+            "ultimoTremSave"
+        );
+
+
+    if (!saved) {
+
+        startNewGame();
+
+        return;
+    }
+
+
+    try {
+
+        const data =
+            JSON.parse(saved);
+
+
+        Object.assign(
+            state,
+            data.state
+        );
+
+
+        Object.assign(
+            player,
+            data.player
+        );
+
+
+        state.started =
+            true;
+
+
+        menuScreen.classList.add(
+            "hidden"
+        );
+
+
+        gameContainer.classList.remove(
+            "hidden"
+        );
+
+
+        hud.classList.remove(
+            "hidden"
+        );
+
+
+        camera.position.set(
+            player.x,
+            player.y,
+            player.z
+        );
+
+
+        updateHUD();
+
+
+    } catch {
+
+        startNewGame();
     }
 }
 
 
 /* =========================================================
-   MOSTRAR ITEM
+   APAGAR SAVE
 ========================================================= */
 
-function showItem(id) {
+function deleteSave() {
 
-    selectedItem = id;
-
-    const content =
-        $("itemContent");
-
-    const visual =
-        $("itemVisual");
+    localStorage.removeItem(
+        "ultimoTremSave"
+    );
 
 
-    if (
-        id === "ticket"
-    ) {
-
-        visual.innerHTML =
-            `<div class="big-ticket">
-                <strong>ÚLTIMO TREM</strong>
-                <br>
-                LINHA 0
-                <br><br>
-                00:00
-                <br><br>
-                SALA 0
-            </div>`;
-
-        content.innerHTML = `
-            <h2>Bilhete impossível</h2>
-            <p>
-                Este bilhete parece antigo, mas está
-                perfeitamente conservado.
-                Ele indica uma viagem às 00:00,
-                na Linha 0, com destino desconhecido.
-            </p>
-            <p>
-                <strong>Como usar:</strong>
-                examine o bilhete quando encontrar
-                alguma pista relacionada à Sala 0.
-            </p>
-        `;
-
-        $("useItemButton").textContent =
-            "EXAMINAR BILHETE";
-
-
-    } else if (
-        id === "flashlight"
-    ) {
-
-        visual.innerHTML =
-            `<div style="font-size:75px">🔦</div>`;
-
-        content.innerHTML = `
-            <h2>Lanterna</h2>
-            <p>
-                Uma lanterna resistente.
-                Ela ilumina uma área grande ao redor
-                de Yuri.
-            </p>
-            <p>
-                <strong>Como usar:</strong>
-                pressione F ou use o botão
-                LANTERNA na tela.
-            </p>
-        `;
-
-        $("useItemButton").textContent =
-            flashlightOn
-                ? "DESLIGAR LANTERNA"
-                : "LIGAR LANTERNA";
-
-
-    } else if (
-        id === "key"
-    ) {
-
-        visual.innerHTML =
-            `<div class="big-key"></div>`;
-
-        content.innerHTML = `
-            <h2>Chave antiga</h2>
-            <p>
-                Uma chave pesada, provavelmente usada
-                em alguma porta antiga da estação.
-            </p>
-            <p>
-                <strong>Como usar:</strong>
-                ela será utilizada automaticamente
-                quando Yuri encontrar uma fechadura
-                compatível.
-            </p>
-        `;
-
-        $("useItemButton").textContent =
-            "EXAMINAR";
-
-
-    } else if (
-        id === "coin"
-    ) {
-
-        visual.innerHTML =
-            `<div class="big-coin">0</div>`;
-
-        content.innerHTML = `
-            <h2>Moeda estranha</h2>
-            <p>
-                Uma moeda metálica com uma marca
-                impossível no centro.
-            </p>
-            <p>
-                <strong>Como usar:</strong>
-                guarde-a. Algumas portas podem
-                reconhecer o símbolo.
-            </p>
-        `;
-
-        $("useItemButton").textContent =
-            "EXAMINAR";
-
-
-    } else {
-
-        visual.innerHTML =
-            `<div style="font-size:70px">🏥</div>`;
-
-        content.innerHTML = `
-            <h2>Cartão hospitalar</h2>
-            <p>
-                Um cartão ligado ao Hospital São Lucas.
-            </p>
-        `;
-
-        $("useItemButton").textContent =
-            "EXAMINAR";
-    }
-
-
-    itemModal.classList.remove(
-        "hidden"
+    alert(
+        "O progresso foi apagado."
     );
 }
 
 
 /* =========================================================
-   USAR ITEM
+   SALVAR
 ========================================================= */
 
-function useSelectedItem() {
+function saveGame() {
 
-    if (
-        selectedItem === "ticket"
-    ) {
+    localStorage.setItem(
+        "ultimoTremSave",
 
-        showTicket();
+        JSON.stringify({
 
-    } else if (
-        selectedItem === "flashlight"
-    ) {
+            state,
 
-        toggleFlashlight();
+            player: {
 
-        showItem(
-            "flashlight"
-        );
+                x: player.x,
 
-    } else {
+                z: player.z,
 
-        addClue(
-            "Yuri examinou o objeto, mas ainda não sabe como utilizá-lo."
-        );
-    }
-}
+                health:
+                    player.health,
 
+                energy:
+                    player.energy,
 
-/* =========================================================
-   BILHETE
-========================================================= */
-
-function showTicket() {
-
-    itemModal.classList.add(
-        "hidden"
-    );
-
-    ticketModal.classList.remove(
-        "hidden"
+                y:
+                    player.y
+            }
+        })
     );
 }
 
@@ -2907,250 +3133,887 @@ function toggleFlashlight() {
         !flashlightOn;
 
 
-    if (
+    flashlight.visible =
+        flashlightOn;
+
+
+    flashlightGlow.visible =
+        flashlightOn;
+
+
+    state.flashlightUsed =
+        true;
+
+
+    const button =
+        document.getElementById(
+            "flashlightButton"
+        );
+
+
+    button.style.borderColor =
         flashlightOn
-    ) {
-
-        flashlight.intensity = 13;
-        flashlightGlow.intensity = 2.2;
-
-        $("flashlightButton")
-            .classList.add(
-                "active"
-            );
-
-    } else {
-
-        flashlight.intensity = 0;
-        flashlightGlow.intensity = 0;
-
-        $("flashlightButton")
-            .classList.remove(
-                "active"
-            );
-    }
-}
+            ? "rgba(210,180,240,.55)"
+            : "rgba(255,255,255,.13)";
 
 
-/* =========================================================
-   DIÁLOGOS
-========================================================= */
-
-function talkTo(npc) {
-
-    if (
-        npc.name === "Olivia"
-    ) {
-
-        startDialogue(
-            "Olivia",
-            [
-                "Você finalmente chegou.",
-                "Eu estava começando a achar que o Último Trem tinha escolhido outra pessoa desta vez.",
-                "Não tente entender a estação olhando apenas para o que está diante dos seus olhos.",
-                "Aqui, algumas coisas aconteceram antes de acontecerem.",
-                "E outras ainda estão esperando para acontecer.",
-                "Você tem um bilhete, não tem?",
-                "Então precisa descobrir o que significa a Sala 0."
-            ]
-        );
-
-
-        npc.talked = true;
-
-        completeMission(
-            "A mulher na plataforma"
-        );
-
-        activateMission(
-            "O bilhete impossível"
-        );
-
-
-    } else if (
-        npc.name === "Condutor"
-    ) {
-
-        startDialogue(
-            "Condutor",
-            [
-                "O trem chega à meia-noite.",
-                "Sempre chegou.",
-                "O problema é que esta linha foi fechada há muitos anos.",
-                "Você quer saber para onde ele vai?",
-                "Não é o destino que importa.",
-                "É o que você traz consigo quando entra."
-            ]
-        );
-
-
-        inventory.conductorBadge = true;
-
-        addClue(
-            "O Condutor conhece a história da Linha 0."
-        );
-
-
-    } else if (
-        npc.name === "Kaio"
-    ) {
-
-        startDialogue(
-            "Kaio",
-            [
-                "Meu nome é Kaio.",
-                "Eu estava no hospital quando os relógios começaram a funcionar ao contrário.",
-                "Depois disso, algumas pessoas começaram a aparecer em lugares onde nunca tinham estado.",
-                "Os médicos chamaram de confusão.",
-                "Mas eu vi o trem.",
-                "Ele passou pelo hospital sem trilhos."
-            ]
-        );
-
-
-        inventory.hospitalCard = true;
-
-        completeMission(
-            "Paciente 404"
-        );
-
-        activateMission(
-            "Debaixo da cidade"
-        );
-
-
-    } else {
-
-        startDialogue(
-            "Senhora da Cidade Antiga",
-            [
-                "Você está procurando a Sala 0.",
-                "Todo mundo que procura acaba encontrando.",
-                "O problema é voltar.",
-                "A cidade antiga guarda uma entrada.",
-                "Mas somente aquilo que pertence à Linha 0 pode abri-la."
-            ]
-        );
-
-
-        addClue(
-            "A entrada da Sala 0 pode estar escondida sob a cidade."
-        );
-    }
+    button.querySelector(
+        "span"
+    ).textContent =
+        flashlightOn
+            ? "LANTERNA ON"
+            : "LANTERNA OFF";
 
 
     saveGame();
 }
 
 
-function startDialogue(
-    name,
-    messages
-) {
+/* =========================================================
+   INTERAÇÃO
+========================================================= */
 
-    currentDialogue = {
-        name,
-        messages
-    };
+function interact() {
 
-    dialogueIndex = 0;
-
-    $("dialogueName")
-        .textContent = name;
-
-    $("dialogueAvatar")
-        .textContent =
-        name.charAt(0);
-
-    dialogueModal.classList.remove(
-        "hidden"
-    );
-
-    showDialogueText();
-}
+    const target =
+        findInteractionTarget();
 
 
-function showDialogueText() {
+    if (!target) {
 
-    clearTimeout(
-        typingTimer
-    );
-
-
-    const text =
-        currentDialogue.messages[
-            dialogueIndex
-        ];
-
-
-    $("dialogueCounter")
-        .textContent =
-        `${dialogueIndex + 1} / ${currentDialogue.messages.length}`;
-
-
-    const element =
-        $("dialogueText");
-
-
-    element.textContent = "";
-
-
-    let i = 0;
-
-
-    function type() {
-
-        if (
-            i >= text.length
-        ) {
-            return;
-        }
-
-        element.textContent +=
-            text.charAt(i);
-
-        i++;
-
-        typingTimer =
-            setTimeout(
-                type,
-                20
-            );
+        return;
     }
 
 
-    type();
+    if (
+        target.userData.character
+    ) {
+
+        interactCharacter(
+            target.userData.character
+        );
+
+        return;
+    }
+
+
+    if (
+        target.userData.objectId
+    ) {
+
+        interactObject(
+            target.userData.objectId
+        );
+
+        return;
+    }
+
+
+    if (
+        target.userData.isTrain
+    ) {
+
+        openTrain();
+
+        return;
+    }
+}
+
+
+/* =========================================================
+   ENCONTRAR OBJETO
+========================================================= */
+
+function findInteractionTarget() {
+
+    const raycaster =
+        new THREE.Raycaster();
+
+
+    raycaster.setFromCamera(
+        new THREE.Vector2(0, 0),
+        camera
+    );
+
+
+    const objects =
+        [];
+
+
+    scene.traverse(
+        object => {
+
+            if (
+                object.userData &&
+                object.userData.interact
+            ) {
+
+                objects.push(
+                    object
+                );
+            }
+        }
+    );
+
+
+    const hits =
+        raycaster.intersectObjects(
+            objects,
+            true
+        );
+
+
+    if (
+        hits.length === 0
+    ) {
+
+        return null;
+    }
+
+
+    if (
+        hits[0].distance > 5
+    ) {
+
+        return null;
+    }
+
+
+    let object =
+        hits[0].object;
+
+
+    while (
+        object.parent &&
+        !object.userData.interact
+    ) {
+
+        object =
+            object.parent;
+    }
+
+
+    return object;
+}
+
+
+/* =========================================================
+   PERSONAGENS
+========================================================= */
+
+function interactCharacter(
+    name
+) {
+
+    if (name === "Olivia") {
+
+        state.metOlivia =
+            true;
+
+
+        state.clues++;
+
+
+        showDialogue(
+            "Olivia",
+            "👩",
+            [
+                "Você finalmente chegou.",
+                "Yuri... não é?",
+                "Não faça essa cara. Eu sei que você não se lembra de mim.",
+                "Mas eu lembro de você.",
+                "Esta estação foi fechada há muitos anos.",
+                "O problema é que, de tempos em tempos, o Último Trem continua chegando.",
+                "Se quiser entender o que está acontecendo, procure o bilhete vermelho.",
+                "E não confie no relógio."
+            ]
+        );
+
+
+        updateObjective(
+            "Encontre o bilhete vermelho e descubra por que Olivia conhece Yuri."
+        );
+
+
+        saveGame();
+
+        return;
+    }
+
+
+    if (name === "Kaio") {
+
+        state.metKaio =
+            true;
+
+
+        state.clues++;
+
+
+        showDialogue(
+            "Kaio",
+            "👨",
+            [
+                "Você também está preso aqui?",
+                "Meu nome é Kaio.",
+                "Disseram que eu era o Paciente 404.",
+                "Mas quando procurei meu prontuário, encontrei datas que ainda não aconteceram.",
+                "Existe um terminal no hospital.",
+                "O código é 0404.",
+                "Depois que você descobrir o que há lá, talvez entenda por que o trem nunca para de voltar."
+            ]
+        );
+
+
+        updateObjective(
+            "Descubra o que aconteceu com o Paciente 404."
+        );
+
+
+        saveGame();
+
+        return;
+    }
+
+
+    if (name === "Condutor") {
+
+        state.metConductor =
+            true;
+
+
+        state.clues++;
+
+
+        showDialogue(
+            "Condutor",
+            "🚉",
+            [
+                "Passageiros não deveriam estar nesta plataforma.",
+                "Principalmente você.",
+                "Esse trem não pertence mais ao horário normal.",
+                "Ele passa exatamente à meia-noite.",
+                "Sempre leva alguém para um lugar diferente.",
+                "Se encontrar a Sala 0, não entre sem a chave mestra.",
+                "E lembre-se: o trem sempre retorna."
+            ]
+        );
+
+
+        updateObjective(
+            "Encontre a Chave Mestra e descubra a entrada da Sala 0."
+        );
+
+
+        saveGame();
+
+        return;
+    }
+
+
+    if (name === "Senhora") {
+
+        state.talkedOldWoman =
+            true;
+
+
+        state.clues++;
+
+
+        showDialogue(
+            "Senhora da Cidade Antiga",
+            "👵",
+            [
+                "Eu vi a primeira vez que aquele trem passou.",
+                "Foi antes de você nascer.",
+                "A cidade mudou desde então.",
+                "Mas aquela estação continuou igual.",
+                "Se você encontrou uma moeda estranha, guarde-a.",
+                "Ela pertence a quem passou pelo trem antes de você.",
+                "Algumas coisas precisam ser lembradas para que o ciclo termine."
+            ]
+        );
+
+
+        updateObjective(
+            "Descubra a origem da moeda estranha."
+        );
+
+
+        saveGame();
+    }
+}
+
+
+/* =========================================================
+   OBJETOS
+========================================================= */
+
+function interactObject(
+    id
+) {
+
+    if (id === "ticket") {
+
+        state.ticketRead =
+            true;
+
+
+        showTicket();
+
+
+        updateObjective(
+            "Descubra o significado da Sala 0."
+        );
+
+
+        saveGame();
+
+        return;
+    }
+
+
+    if (id === "key") {
+
+        state.hasKey =
+            true;
+
+
+        state.clues++;
+
+
+        showDialogue(
+            "Yuri",
+            "👤",
+            [
+                "Uma chave antiga.",
+                "Parece pesada demais para uma porta comum.",
+                "Talvez pertença a alguma área que foi trancada quando a estação fechou."
+            ]
+        );
+
+
+        updateObjective(
+            "Encontre a porta que pode ser aberta com a chave."
+        );
+
+
+        saveGame();
+
+        return;
+    }
+
+
+    if (id === "coin") {
+
+        state.hasCoin =
+            true;
+
+
+        state.coins++;
+
+
+        state.clues++;
+
+
+        showDialogue(
+            "Yuri",
+            "👤",
+            [
+                "Uma moeda...",
+                "Tem um símbolo gravado no centro.",
+                "Eu já vi esse símbolo antes.",
+                "No bilhete."
+            ]
+        );
+
+
+        updateObjective(
+            "Descubra a relação entre a moeda e o bilhete."
+        );
+
+
+        saveGame();
+
+        return;
+    }
+
+
+    if (id === "hospital") {
+
+        showDialogue(
+            "Yuri",
+            "👤",
+            [
+                "Um cartão do Hospital São Lucas.",
+                "O número 404 ainda pode ser lido.",
+                "Talvez Kaio esteja relacionado a isso."
+            ]
+        );
+
+
+        updateObjective(
+            "Leve as pistas até o Hospital São Lucas."
+        );
+
+
+        saveGame();
+    }
+}
+
+
+/* =========================================================
+   DIÁLOGO
+========================================================= */
+
+function showDialogue(
+    name,
+    avatar,
+    lines
+) {
+
+    state.currentDialogue = {
+
+        name,
+
+        avatar,
+
+        lines
+    };
+
+
+    state.dialogueIndex =
+        0;
+
+
+    document
+        .getElementById(
+            "dialogueModal"
+        )
+        .classList.remove(
+            "hidden"
+        );
+
+
+    updateDialogue();
+}
+
+
+function updateDialogue() {
+
+    const dialogue =
+        state.currentDialogue;
+
+
+    if (!dialogue)
+        return;
+
+
+    document
+        .getElementById(
+            "dialogueName"
+        )
+        .textContent =
+        dialogue.name;
+
+
+    document
+        .getElementById(
+            "dialogueAvatar"
+        )
+        .textContent =
+        dialogue.avatar;
+
+
+    document
+        .getElementById(
+            "dialogueText"
+        )
+        .textContent =
+        dialogue.lines[
+            state.dialogueIndex
+        ];
+
+
+    document
+        .getElementById(
+            "dialogueProgress"
+        )
+        .textContent =
+        `${state.dialogueIndex + 1} / ${dialogue.lines.length}`;
+
+
+    const button =
+        document.getElementById(
+            "dialogueNext"
+        );
+
+
+    button.textContent =
+        state.dialogueIndex ===
+        dialogue.lines.length - 1
+            ? "FECHAR"
+            : "CONTINUAR";
 }
 
 
 function nextDialogue() {
 
+    const dialogue =
+        state.currentDialogue;
+
+
+    if (!dialogue)
+        return;
+
+
     if (
-        !currentDialogue
+        state.dialogueIndex <
+        dialogue.lines.length - 1
     ) {
+
+        state.dialogueIndex++;
+
+        updateDialogue();
+
         return;
     }
 
 
-    dialogueIndex++;
+    closeModal(
+        "dialogueModal"
+    );
 
 
-    if (
-        dialogueIndex >=
-        currentDialogue.messages.length
-    ) {
+    state.currentDialogue =
+        null;
 
-        dialogueModal.classList.add(
-            "hidden"
+
+    saveGame();
+}
+
+
+/* =========================================================
+   INVENTÁRIO
+========================================================= */
+
+function openInventory() {
+
+    const list =
+        document.getElementById(
+            "inventoryList"
         );
 
-        currentDialogue = null;
+
+    list.innerHTML = "";
+
+
+    const owned =
+        inventory.filter(
+            item => {
+
+                if (
+                    item.id === "ticket"
+                )
+                    return state.hasTicket;
+
+                if (
+                    item.id === "key"
+                )
+                    return state.hasKey;
+
+                if (
+                    item.id === "coin"
+                )
+                    return state.hasCoin;
+
+                if (
+                    item.id === "masterkey"
+                )
+                    return state.hasMasterKey;
+
+                if (
+                    item.id === "hospital"
+                )
+                    return state.metKaio;
+
+                if (
+                    item.id === "badge"
+                )
+                    return state.metConductor;
+
+                if (
+                    item.id === "flashlight"
+                )
+                    return true;
+
+                return false;
+            }
+        );
+
+
+    if (
+        owned.length === 0
+    ) {
+
+        list.innerHTML =
+            "<p>Seu inventário está vazio.</p>";
 
         return;
     }
 
 
-    showDialogueText();
+    owned.forEach(
+        item => {
+
+            const card =
+                document.createElement(
+                    "button"
+                );
+
+
+            card.className =
+                "inventory-card";
+
+
+            card.innerHTML = `
+
+                <div class="inventory-icon">
+                    ${item.icon}
+                </div>
+
+                <strong>
+                    ${item.name}
+                </strong>
+
+                <small>
+                    Clique para examinar
+                </small>
+            `;
+
+
+            card.addEventListener(
+                "click",
+                () => {
+
+                    openItem(
+                        item
+                    );
+                }
+            );
+
+
+            list.appendChild(card);
+        }
+    );
+}
+
+
+function openItem(
+    item
+) {
+
+    state.selectedItem =
+        item;
+
+
+    document
+        .getElementById(
+            "itemIcon"
+        )
+        .textContent =
+        item.icon;
+
+
+    document
+        .getElementById(
+            "itemName"
+        )
+        .textContent =
+        item.name;
+
+
+    document
+        .getElementById(
+            "itemDescription"
+        )
+        .textContent =
+        item.description;
+
+
+    const button =
+        document.getElementById(
+            "useItemButton"
+        );
+
+
+    button.style.display =
+        item.usable
+            ? "block"
+            : "none";
+
+
+    closeModal(
+        "inventoryModal"
+    );
+
+
+    toggleModal(
+        "itemModal"
+    );
+}
+
+
+/* =========================================================
+   USAR OBJETO
+========================================================= */
+
+function useSelectedItem() {
+
+    const item =
+        state.selectedItem;
+
+
+    if (!item)
+        return;
+
+
+    if (
+        item.id === "flashlight"
+    ) {
+
+        closeModal(
+            "itemModal"
+        );
+
+        toggleFlashlight();
+
+        return;
+    }
+
+
+    if (
+        item.id === "ticket"
+    ) {
+
+        closeModal(
+            "itemModal"
+        );
+
+        showTicket();
+
+        return;
+    }
+
+
+    if (
+        item.id === "key"
+    ) {
+
+        closeModal(
+            "itemModal"
+        );
+
+
+        showDialogue(
+            "Yuri",
+            "👤",
+            [
+                "A chave parece combinar com alguma porta antiga.",
+                "Não posso usá-la aqui.",
+                "Preciso encontrar a fechadura certa."
+            ]
+        );
+
+
+        return;
+    }
+
+
+    if (
+        item.id === "coin"
+    ) {
+
+        closeModal(
+            "itemModal"
+        );
+
+
+        showDialogue(
+            "Yuri",
+            "👤",
+            [
+                "O símbolo da moeda é igual ao símbolo do bilhete.",
+                "Isso não parece uma coincidência."
+            ]
+        );
+
+
+        return;
+    }
+
+
+    if (
+        item.id === "masterkey"
+    ) {
+
+        closeModal(
+            "itemModal"
+        );
+
+
+        showDialogue(
+            "Yuri",
+            "👤",
+            [
+                "A chave mestra.",
+                "Talvez finalmente seja possível abrir a Sala 0."
+            ]
+        );
+
+
+        return;
+    }
+
+
+    if (
+        item.id === "badge"
+    ) {
+
+        closeModal(
+            "itemModal"
+        );
+
+
+        showDialogue(
+            "Yuri",
+            "👤",
+            [
+                "A insígnia do condutor.",
+                "Ela parece antiga... muito antiga."
+            ]
+        );
+    }
+}
+
+
+/* =========================================================
+   BILHETE
+========================================================= */
+
+function showTicket() {
+
+    state.ticketRead =
+        true;
+
+
+    document
+        .getElementById(
+            "ticketModal"
+        )
+        .classList.remove(
+            "hidden"
+        );
 }
 
 
@@ -3158,134 +4021,394 @@ function nextDialogue() {
    MISSÕES
 ========================================================= */
 
-function openMissions() {
-
-    renderMissions();
-
-    missionsModal.classList.remove(
-        "hidden"
-    );
-}
-
-
-function renderMissions() {
+function updateMissions() {
 
     const list =
-        $("missionsList");
+        document.getElementById(
+            "missionsList"
+        );
+
+
+    const missions = [
+
+        {
+            title:
+                "A estação vazia",
+
+            text:
+                "Explore a Estação Central e descubra por que ela foi abandonada.",
+
+            done:
+                state.metOlivia
+        },
+
+        {
+            title:
+                "Olivia",
+
+            text:
+                "Descubra por que Olivia conhece Yuri.",
+
+            done:
+                state.metOlivia
+        },
+
+        {
+            title:
+                "O bilhete impossível",
+
+            text:
+                "Examine o bilhete e descubra a importância da Sala 0.",
+
+            done:
+                state.ticketRead
+        },
+
+        {
+            title:
+                "O Último Trem",
+
+            text:
+                "Descubra por que o trem continua chegando à meia-noite.",
+
+            done:
+                state.metConductor
+        },
+
+        {
+            title:
+                "Paciente 404",
+
+            text:
+                "Investigue o Hospital São Lucas.",
+
+            done:
+                state.hospitalSolved
+        },
+
+        {
+            title:
+                "Debaixo da cidade",
+
+            text:
+                "Descubra o que existe nos túneis.",
+
+            done:
+                state.tunnelSolved
+        },
+
+        {
+            title:
+                "Sala 0",
+
+            text:
+                "Encontre a Sala 0 e descubra a verdade.",
+
+            done:
+                state.roomZeroReached
+        }
+
+    ];
+
 
     list.innerHTML = "";
 
 
-    for (const mission of missions) {
+    missions.forEach(
+        mission => {
 
-        const card =
-            document.createElement(
-                "div"
-            );
-
-        card.className =
-            "mission-card";
+            const div =
+                document.createElement(
+                    "div"
+                );
 
 
-        if (
-            mission.active
-        ) {
-            card.classList.add(
-                "active"
-            );
+            div.style.padding =
+                "15px";
+
+            div.style.marginBottom =
+                "8px";
+
+            div.style.background =
+                "rgba(255,255,255,.04)";
+
+            div.style.border =
+                "1px solid rgba(255,255,255,.08)";
+
+
+            div.innerHTML = `
+
+                <strong>
+                    ${mission.done ? "✓ " : "○ "}
+                    ${mission.title}
+                </strong>
+
+                <p style="
+                    margin-top:8px;
+                    color:#9299a2;
+                    font-size:12px;
+                    line-height:1.5;
+                ">
+                    ${mission.text}
+                </p>
+            `;
+
+
+            list.appendChild(div);
         }
-
-        if (
-            mission.done
-        ) {
-            card.classList.add(
-                "done"
-            );
-        }
-
-
-        card.innerHTML = `
-            <h3>
-                ${mission.done ? "✓ " : ""}
-                ${mission.title}
-            </h3>
-
-            <p>
-                ${mission.description}
-            </p>
-        `;
-
-
-        list.appendChild(card);
-    }
-}
-
-
-function completeMission(title) {
-
-    const mission =
-        missions.find(
-            m => m.title === title
-        );
-
-    if (
-        mission
-    ) {
-
-        mission.done = true;
-        mission.active = false;
-    }
-
-    updateObjective();
-}
-
-
-function activateMission(title) {
-
-    const mission =
-        missions.find(
-            m => m.title === title
-        );
-
-    if (
-        mission &&
-        !mission.done
-    ) {
-        mission.active = true;
-    }
-
-    updateObjective();
-}
-
-
-function updateObjective() {
-
-    const active =
-        missions.find(
-            m =>
-                m.active &&
-                !m.done
-        );
-
-
-    objectiveText.textContent =
-        active
-            ? active.description
-            : "Explore a estação e descubra o próximo caminho.";
+    );
 }
 
 
 /* =========================================================
-   PISTAS
+   OBJETIVO
 ========================================================= */
 
-function addClue(text) {
+function updateObjective(
+    text
+) {
+
+    document
+        .getElementById(
+            "objectiveText"
+        )
+        .textContent =
+        text;
+
+
+    updateMissions();
+}
+
+
+/* =========================================================
+   TREM
+========================================================= */
+
+function openTrain() {
+
+    document
+        .getElementById(
+            "trainModal"
+        )
+        .classList.remove(
+            "hidden"
+        );
+}
+
+
+function travelTo(
+    destination
+) {
+
+    closeModal(
+        "trainModal"
+    );
+
 
     if (
-        !clues.includes(text)
+        destination === "hospital"
     ) {
-        clues.push(text);
+
+        showDialogue(
+            "Yuri",
+            "👤",
+            [
+                "O trem para no Hospital São Lucas.",
+                "Talvez eu encontre respostas lá."
+            ]
+        );
+
+
+        state.currentArea =
+            "hospital";
+
+
+        updateLocation(
+            "HOSPITAL SÃO LUCAS"
+        );
+
+
+        updateObjective(
+            "Procure Kaio e investigue o Paciente 404."
+        );
+
+
+        player.x = 0;
+        player.z = -35;
+
+        camera.position.set(
+            player.x,
+            player.y,
+            player.z
+        );
+
+
+        return;
     }
+
+
+    if (
+        destination === "oldtown"
+    ) {
+
+        state.currentArea =
+            "oldtown";
+
+
+        updateLocation(
+            "CIDADE ANTIGA"
+        );
+
+
+        updateObjective(
+            "Converse com a Senhora da Cidade Antiga."
+        );
+
+
+        player.x = -10;
+        player.z = -55;
+
+
+        camera.position.set(
+            player.x,
+            player.y,
+            player.z
+        );
+
+
+        return;
+    }
+
+
+    if (
+        destination === "tunnels"
+    ) {
+
+        state.currentArea =
+            "tunnels";
+
+
+        updateLocation(
+            "TÚNEIS"
+        );
+
+
+        updateObjective(
+            "Encontre a entrada da Sala 0."
+        );
+
+
+        player.x = 0;
+        player.z = -60;
+
+
+        camera.position.set(
+            player.x,
+            player.y,
+            player.z
+        );
+
+
+        return;
+    }
+
+
+    if (
+        destination === "rain"
+    ) {
+
+        state.currentArea =
+            "rain";
+
+
+        updateLocation(
+            "DISTRITO DA CHUVA"
+        );
+
+
+        updateObjective(
+            "Procure pistas sobre o antigo sistema ferroviário."
+        );
+
+
+        player.x = 15;
+        player.z = -20;
+
+
+        camera.position.set(
+            player.x,
+            player.y,
+            player.z
+        );
+
+
+        return;
+    }
+
+
+    if (
+        destination === "park"
+    ) {
+
+        state.currentArea =
+            "park";
+
+
+        updateLocation(
+            "PARQUE DAS LANTERNAS"
+        );
+
+
+        updateObjective(
+            "Descubra por que as lanternas permanecem acesas."
+        );
+
+
+        player.x = -15;
+        player.z = -20;
+
+
+        camera.position.set(
+            player.x,
+            player.y,
+            player.z
+        );
+    }
+}
+
+
+/* =========================================================
+   SALA 0
+========================================================= */
+
+function enterRoomZero() {
+
+    if (
+        !state.hasMasterKey
+    ) {
+
+        showDialogue(
+            "Yuri",
+            "👤",
+            [
+                "A porta está trancada.",
+                "Preciso de uma chave mais forte."
+            ]
+        );
+
+
+        return;
+    }
+
+
+    state.roomZeroReached =
+        true;
+
+
+    showEnding(
+        "A VERDADE",
+        "A Sala 0 não estava abandonada. Ela estava esperando por Yuri."
+    );
 }
 
 
@@ -3293,69 +4416,164 @@ function addClue(text) {
    PUZZLE
 ========================================================= */
 
-function openPuzzle() {
+function openPuzzle(
+    title,
+    description
+) {
 
-    $("puzzleTitle")
+    document
+        .getElementById(
+            "puzzleTitle"
+        )
         .textContent =
-        "TERMINAL DA LINHA 0";
+        title;
 
-    $("puzzleDescription")
+
+    document
+        .getElementById(
+            "puzzleDescription"
+        )
         .textContent =
-        "O terminal está desligado, mas uma luz vermelha pisca no canto. Na tela aparece apenas uma mensagem: 'PACIENTE 404'.";
+        description;
 
-    $("puzzleInput").value = "";
 
-    $("puzzleMessage")
+    document
+        .getElementById(
+            "puzzleInput"
+        )
+        .value = "";
+
+
+    document
+        .getElementById(
+            "puzzleMessage"
+        )
         .textContent = "";
 
-    puzzleModal.classList.remove(
-        "hidden"
-    );
+
+    document
+        .getElementById(
+            "puzzleModal"
+        )
+        .classList.remove(
+            "hidden"
+        );
+
+
+    document
+        .getElementById(
+            "puzzleInput"
+        )
+        .focus();
 }
 
 
 function solvePuzzle() {
 
     const input =
-        $("puzzleInput")
-            .value
-            .trim();
+        document
+            .getElementById(
+                "puzzleInput"
+            )
+            .value.trim();
+
+
+    const description =
+        document
+            .getElementById(
+                "puzzleDescription"
+            )
+            .textContent;
+
+
+    let correctCode =
+        "";
 
 
     if (
-        input === "0404"
+        description.includes(
+            "hospital"
+        ) ||
+        description.includes(
+            "Paciente"
+        )
     ) {
 
-        $("puzzleMessage")
+        correctCode =
+            "0404";
+
+    } else {
+
+        correctCode =
+            "0000";
+    }
+
+
+    if (
+        input === correctCode
+    ) {
+
+        document
+            .getElementById(
+                "puzzleMessage"
+            )
             .textContent =
-            "ACESSO AUTORIZADO.";
+            "CÓDIGO CORRETO.";
 
-        inventory.key = true;
 
-        addClue(
-            "O código 0404 abriu o acesso secreto."
-        );
+        if (
+            correctCode === "0404"
+        ) {
 
-        activateMission(
-            "Sala 0"
-        );
+            state.hospitalSolved =
+                true;
+
+
+            state.hasMasterKey =
+                true;
+
+
+            updateObjective(
+                "Você encontrou a Chave Mestra. Descubra onde ela pode ser usada."
+            );
+
+        } else {
+
+            state.tunnelSolved =
+                true;
+
+
+            state.hasMasterKey =
+                true;
+
+
+            updateObjective(
+                "A Sala 0 está próxima."
+            );
+        }
+
+
+        saveGame();
+
 
         setTimeout(
             () => {
 
-                puzzleModal.classList.add(
-                    "hidden"
+                closeModal(
+                    "puzzleModal"
                 );
 
-                saveGame();
-
             },
-            1000
+            900
         );
+
 
     } else {
 
-        $("puzzleMessage")
+        document
+            .getElementById(
+                "puzzleMessage"
+            )
             .textContent =
             "Código incorreto.";
     }
@@ -3363,58 +4581,88 @@ function solvePuzzle() {
 
 
 /* =========================================================
-   LOCALIZAÇÃO
+   FINAL
 ========================================================= */
 
-function updateLocation() {
+function showEnding(
+    title,
+    text
+) {
 
-    const z =
-        camera.position.z;
-
-
-    let location =
-        "ESTAÇÃO CENTRAL";
-
-
-    if (
-        z < -20 &&
-        z > -45
-    ) {
-        location =
-            "DISTRITO DA CHUVA";
-    }
+    state.ending =
+        true;
 
 
-    if (
-        z <= -45 &&
-        z > -58
-    ) {
-        location =
-            "PARQUE DAS LANTERNAS";
-    }
+    document
+        .getElementById(
+            "endingTitle"
+        )
+        .textContent =
+        title;
 
 
-    if (
-        z <= -58 &&
-        z > -68
-    ) {
-        location =
-            "CIDADE ANTIGA";
-    }
+    document
+        .getElementById(
+            "endingText"
+        )
+        .textContent =
+        text;
 
 
-    if (
-        z <= -68
-    ) {
-        location =
-            "TÚNEIS";
-    }
+    document
+        .getElementById(
+            "endingModal"
+        )
+        .classList.remove(
+            "hidden"
+        );
 
 
-    locationName.textContent =
-        location;
+    saveGame();
+}
 
-    currentLocation =
+
+/* =========================================================
+   HUD
+========================================================= */
+
+function updateHUD() {
+
+    document
+        .getElementById(
+            "healthText"
+        )
+        .textContent =
+        Math.round(
+            player.health
+        );
+
+
+    document
+        .getElementById(
+            "energyText"
+        )
+        .textContent =
+        Math.round(
+            player.energy
+        );
+
+
+    updateClock();
+
+    updateMissions();
+}
+
+
+function updateLocation(
+    location
+) {
+
+    document
+        .getElementById(
+            "locationText"
+        )
+        .textContent =
         location;
 }
 
@@ -3423,418 +4671,436 @@ function updateLocation() {
    RELÓGIO
 ========================================================= */
 
-function updateGameClock(delta) {
+function updateClock() {
 
-    // Aproximadamente 1 minuto de jogo
-    // a cada 12 segundos reais.
-
-    gameTime.minute +=
-        delta * 5;
-
-
-    if (
-        gameTime.minute >= 60
-    ) {
-
-        gameTime.minute -= 60;
-
-        gameTime.hour++;
-
-        if (
-            gameTime.hour >= 24
-        ) {
-            gameTime.hour = 0;
-        }
-    }
+    const hours =
+        Math.floor(
+            state.timeMinutes / 60
+        );
 
 
-    const h =
-        String(
-            Math.floor(
-                gameTime.hour
-            )
-        ).padStart(2, "0");
+    const minutes =
+        state.timeMinutes % 60;
 
 
-    const m =
-        String(
-            Math.floor(
-                gameTime.minute
-            )
-        ).padStart(2, "0");
-
-
-    gameClock.textContent =
-        `${h}:${m}`;
+    document
+        .getElementById(
+            "clockText"
+        )
+        .textContent =
+        `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
 
 /* =========================================================
-   SAVE
+   TEMPO
 ========================================================= */
 
-function saveGame() {
-
-    const data = {
-
-        player,
-
-        gameTime,
-
-        inventory,
-
-        clues,
-
-        missions,
-
-        position: {
-            x: camera
-                ? camera.position.x
-                : 0,
-
-            z: camera
-                ? camera.position.z
-                : 8
-        }
-    };
+let lastTime =
+    performance.now();
 
 
-    localStorage.setItem(
-        SAVE_KEY,
-        JSON.stringify(data)
-    );
-}
-
-
-function loadGame() {
-
-    const raw =
-        localStorage.getItem(
-            SAVE_KEY
-        );
-
-
-    if (
-        !raw
-    ) {
-        return;
-    }
-
-
-    try {
-
-        const data =
-            JSON.parse(raw);
-
-
-        player = {
-            ...player,
-            ...data.player
-        };
-
-
-        gameTime = {
-            ...gameTime,
-            ...data.gameTime
-        };
-
-
-        inventory = {
-            ...inventory,
-            ...data.inventory
-        };
-
-
-        clues =
-            data.clues || [];
-
-
-        if (
-            data.missions
-        ) {
-            missions =
-                data.missions;
-        }
-
-
-        if (
-            data.position
-        ) {
-
-            player.x =
-                data.position.x;
-
-            player.z =
-                data.position.z;
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Erro ao carregar save:",
-            error
-        );
-    }
-}
-
-
-function deleteSave() {
-
-    const confirmed =
-        confirm(
-            "Tem certeza que deseja apagar todo o progresso?"
-        );
-
-
-    if (
-        !confirmed
-    ) {
-        return;
-    }
-
-
-    localStorage.removeItem(
-        SAVE_KEY
-    );
-
-    alert(
-        "Progresso apagado."
-    );
-}
-
-
-/* =========================================================
-   FINAIS
-========================================================= */
-
-function showEnding(
-    type
+function updateGameTime(
+    delta
 ) {
 
-    let title =
-        "A VERDADE";
-
-    let text =
-        "Você descobriu parte da história, mas a estação ainda guarda respostas.";
+    state.timeMinutes +=
+        delta * .7;
 
 
     if (
-        type === "secret"
+        state.timeMinutes >= 60
     ) {
 
-        title =
-            "SALA 0";
-
-        text =
-            "A porta finalmente se abriu. Dentro dela não havia uma sala comum, mas o lugar onde o tempo da estação parecia começar e terminar ao mesmo tempo.";
+        state.timeMinutes = 0;
     }
 
 
-    if (
-        type === "loop"
-    ) {
-
-        title =
-            "O CICLO";
-
-        text =
-            "O relógio marcou 00:00 novamente. O trem chegou. E Yuri percebeu que talvez nunca tivesse realmente saído da estação.";
-    }
-
-
-    if (
-        type === "truth"
-    ) {
-
-        title =
-            "O ÚLTIMO TREM";
-
-        text =
-            "Agora você sabe o que aconteceu naquela noite. Mas descobrir a verdade não significa que a Linha 0 tenha terminado.";
-    }
-
-
-    if (
-        type === "incomplete"
-    ) {
-
-        title =
-            "PERDIDO";
-
-        text =
-            "A estação ficou para trás, mas muitas perguntas permaneceram sem resposta.";
-    }
-
-
-    $("endingTitle")
-        .textContent = title;
-
-    $("endingText")
-        .textContent = text;
-
-    endingModal.classList.remove(
-        "hidden"
-    );
+    updateClock();
 }
 
 
 /* =========================================================
-   FECHAR MODAIS
+   MOVIMENTO
 ========================================================= */
 
-function closeAllModals() {
+function updateMovement(
+    delta
+) {
 
-    document.querySelectorAll(
-        ".modal"
-    ).forEach(modal => {
+    if (!state.started)
+        return;
+
+
+    if (anyModalOpen())
+        return;
+
+
+    const moving =
+        keys.w ||
+        keys.a ||
+        keys.s ||
+        keys.d;
+
+
+    if (!moving)
+        return;
+
+
+    const speed =
+        keys.shift &&
+        player.energy > 0
+            ? player.sprintSpeed
+            : player.speed;
+
+
+    if (
+        keys.shift &&
+        player.energy > 0
+    ) {
+
+        player.energy -=
+            delta * 12;
+
+    } else {
+
+        player.energy +=
+            delta * 6;
+    }
+
+
+    player.energy =
+        THREE.MathUtils.clamp(
+            player.energy,
+            0,
+            100
+        );
+
+
+    const direction =
+        new THREE.Vector3();
+
+
+    camera.getWorldDirection(
+        direction
+    );
+
+
+    direction.y = 0;
+
+    direction.normalize();
+
+
+    const right =
+        new THREE.Vector3(
+            direction.z,
+            0,
+            -direction.x
+        );
+
+
+    const movement =
+        new THREE.Vector3();
+
+
+    if (keys.w)
+        movement.add(direction);
+
+
+    if (keys.s)
+        movement.sub(direction);
+
+
+    if (keys.d)
+        movement.add(right);
+
+
+    if (keys.a)
+        movement.sub(right);
+
+
+    if (
+        movement.lengthSq() > 0
+    ) {
+
+        movement.normalize();
+
+        movement.multiplyScalar(
+            speed * delta
+        );
+
+
+        player.x +=
+            movement.x;
+
+
+        player.z +=
+            movement.z;
+
+
+        /* limites da estação */
+
+        player.x =
+            THREE.MathUtils.clamp(
+                player.x,
+                -27,
+                27
+            );
+
+
+        player.z =
+            THREE.MathUtils.clamp(
+                player.z,
+                -82,
+                17
+            );
+
+
+        camera.position.x =
+            player.x;
+
+
+        camera.position.z =
+            player.z;
+    }
+}
+
+
+/* =========================================================
+   INTERAÇÃO AUTOMÁTICA
+========================================================= */
+
+function updateInteractionHint() {
+
+    if (!state.started)
+        return;
+
+
+    const target =
+        findInteractionTarget();
+
+
+    const hint =
+        document.getElementById(
+            "interactionHint"
+        );
+
+
+    if (target) {
+
+        hint.classList.add(
+            "visible"
+        );
+
+    } else {
+
+        hint.classList.remove(
+            "visible"
+        );
+    }
+}
+
+
+/* =========================================================
+   MODAIS
+========================================================= */
+
+function toggleModal(
+    id
+) {
+
+    const modal =
+        document.getElementById(
+            id
+        );
+
+
+    if (
+        modal.classList.contains(
+            "hidden"
+        )
+    ) {
+
+        if (
+            id === "inventoryModal"
+        ) {
+
+            openInventory();
+        }
+
+
+        if (
+            id === "missionsModal"
+        ) {
+
+            updateMissions();
+        }
+
+
+        modal.classList.remove(
+            "hidden"
+        );
+
+    } else {
 
         modal.classList.add(
             "hidden"
         );
-    });
+    }
 }
 
 
-/* =========================================================
-   ANIMAÇÃO
-========================================================= */
+function closeModal(
+    id
+) {
 
-function animate() {
+    document
+        .getElementById(
+            id
+        )
+        .classList.add(
+            "hidden"
+        );
+}
 
-    requestAnimationFrame(
-        animate
-    );
 
+function anyModalOpen() {
 
-    const delta =
-        Math.min(
-            clock.getDelta(),
-            .05
+    const modals =
+        document.querySelectorAll(
+            ".modal"
         );
 
 
-    updateMovement(
-        delta
-    );
-
-
-    updateLocation();
-
-    updateGameClock(
-        delta
-    );
-
-    findClosestInteraction();
-
-    animateObjects(
-        delta
-    );
-
-
-    renderer.render(
-        scene,
-        camera
-    );
-
-
-    // Autosave periódico
-
-    if (
-        Math.random() < .001
+    for (
+        const modal of modals
     ) {
-        saveGame();
+
+        if (
+            !modal.classList.contains(
+                "hidden"
+            )
+        ) {
+
+            return true;
+        }
     }
+
+
+    return false;
 }
 
 
 /* =========================================================
-   ANIMAÇÃO DE OBJETOS
+   MOBILE
 ========================================================= */
 
-function animateObjects(delta) {
+function setupMobileControls() {
 
-    const time =
-        performance.now() * .001;
+    const hold =
+        (
+            button,
+            key
+        ) => {
 
+            button.addEventListener(
+                "touchstart",
+                event => {
 
-    for (
-        const pickup of pickups
-    ) {
+                    event.preventDefault();
 
-        if (
-            !pickup.parent
-        ) {
-            continue;
-        }
-
-        pickup.rotation.y +=
-            delta * .8;
-
-        pickup.position.y +=
-            Math.sin(time * 2) *
-            delta *
-            .1;
-    }
-
-
-    for (
-        const npc of npcs
-    ) {
-
-        if (
-            npc.object
-        ) {
-
-            npc.object.position.y =
-                Math.sin(
-                    time * 1.5
-                ) * .008;
-        }
-    }
-
-
-    for (
-        const object
-        of environmentObjects
-    ) {
-
-        if (
-            object.userData &&
-            object.userData.isRain
-        ) {
-
-            const positions =
-                object.geometry
-                    .attributes
-                    .position;
-
-            for (
-                let i = 0;
-                i < positions.count;
-                i++
-            ) {
-
-                let y =
-                    positions.getY(i);
-
-                y -=
-                    delta * 14;
-
-                if (
-                    y < 0
-                ) {
-                    y = 20;
+                    keys[key] =
+                        true;
+                },
+                {
+                    passive: false
                 }
+            );
 
-                positions.setY(
-                    i,
-                    y
-                );
-            }
 
-            positions.needsUpdate = true;
-        }
-    }
+            button.addEventListener(
+                "touchend",
+                event => {
+
+                    event.preventDefault();
+
+                    keys[key] =
+                        false;
+                },
+                {
+                    passive: false
+                }
+            );
+        };
+
+
+    hold(
+        document.getElementById(
+            "mobileForward"
+        ),
+        "w"
+    );
+
+
+    hold(
+        document.getElementById(
+            "mobileBackward"
+        ),
+        "s"
+    );
+
+
+    /* =====================================================
+       DIREITA E ESQUERDA CORRETAS
+    ====================================================== */
+
+    hold(
+        document.getElementById(
+            "mobileLeft"
+        ),
+        "a"
+    );
+
+
+    hold(
+        document.getElementById(
+            "mobileRight"
+        ),
+        "d"
+    );
+
+
+    document
+        .getElementById(
+            "mobileInteract"
+        )
+        .addEventListener(
+            "click",
+            interact
+        );
+
+
+    document
+        .getElementById(
+            "mobileFlashlight"
+        )
+        .addEventListener(
+            "click",
+            toggleFlashlight
+        );
+
+
+    document
+        .getElementById(
+            "mobileInventory"
+        )
+        .addEventListener(
+            "click",
+            () =>
+                toggleModal(
+                    "inventoryModal"
+                )
+        );
 }
 
 
@@ -3843,14 +5109,6 @@ function animateObjects(delta) {
 ========================================================= */
 
 function onResize() {
-
-    if (
-        !camera ||
-        !renderer
-    ) {
-        return;
-    }
-
 
     camera.aspect =
         window.innerWidth /
@@ -3864,27 +5122,56 @@ function onResize() {
         window.innerWidth,
         window.innerHeight
     );
-
-    camera = new THREE.PerspectiveCamera(
-    70,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    500
-);
-
-camera.position.set(
-    player.x,
-    1.72,
-    player.z
-);
-
-scene.add(camera);
-
 }
 
 
 /* =========================================================
-   INÍCIO
+   ANIMAÇÃO
+========================================================= */
+
+function animate(
+    currentTime = performance.now()
+) {
+
+    requestAnimationFrame(
+        animate
+    );
+
+
+    const delta =
+        Math.min(
+            (currentTime - lastTime) /
+            1000,
+            .05
+        );
+
+
+    lastTime =
+        currentTime;
+
+
+    updateMovement(
+        delta
+    );
+
+
+    updateGameTime(
+        delta
+    );
+
+
+    updateInteractionHint();
+
+
+    renderer.render(
+        scene,
+        camera
+    );
+}
+
+
+/* =========================================================
+   INICIAR
 ========================================================= */
 
 init();
