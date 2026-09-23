@@ -3864,6 +3864,22 @@ function onResize() {
         window.innerWidth,
         window.innerHeight
     );
+
+    camera = new THREE.PerspectiveCamera(
+    70,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    500
+);
+
+camera.position.set(
+    player.x,
+    1.72,
+    player.z
+);
+
+scene.add(camera);
+
 }
 
 
