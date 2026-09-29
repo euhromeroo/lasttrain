@@ -1,602 +1,388 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    >
-
-    <title>Último Trem</title>
-
-    <link rel="stylesheet" href="style.css">
-
-    <!-- Importação estável do Three.js -->
-    <script type="importmap">
-    {
-        "imports": {
-            "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"
-        }
-    }
-    </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Último Trem 3D</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
 
-    <!-- =====================================================
-         TELA DE CARREGAMENTO
-    ====================================================== -->
+  <div id="loading">
+    <div class="loading-logo">ÚLTIMO TREM</div>
+    <div class="loading-sub">A Estação Central ainda se lembra de você.</div>
+  </div>
 
-    <div id="loadingScreen">
+  <div id="menu" class="screen">
 
-        <div class="loading-content">
+    <div class="station-bg" aria-hidden="true">
+      <div class="ceiling-light light-a"></div>
+      <div class="ceiling-light light-b"></div>
+      <div class="ceiling-light light-c"></div>
 
-            <div class="train-symbol">
-                🚇
-            </div>
+      <div class="station-wall wall-left"></div>
+      <div class="station-wall wall-right"></div>
 
-            <h1>ÚLTIMO TREM</h1>
+      <div class="platform platform-left"></div>
+      <div class="platform platform-right"></div>
 
-            <p id="loadingText">
-                Preparando a estação...
-            </p>
+      <div class="rail rail-a"></div>
+      <div class="rail rail-b"></div>
 
-            <div class="loading-bar">
-                <div id="loadingProgress"></div>
-            </div>
+      <div class="rail-sleeper s1"></div>
+      <div class="rail-sleeper s2"></div>
+      <div class="rail-sleeper s3"></div>
+      <div class="rail-sleeper s4"></div>
+      <div class="rail-sleeper s5"></div>
+      <div class="rail-sleeper s6"></div>
 
+      <div class="tunnel"></div>
+
+      <div class="fog fog-a"></div>
+      <div class="fog fog-b"></div>
+
+      <div class="sign-back">ESTAÇÃO CENTRAL</div>
+    </div>
+
+    <div class="menu-topline">
+      <span>ESTAÇÃO CENTRAL</span>
+      <span class="menu-time">23:59</span>
+    </div>
+
+    <div class="menu-vignette"></div>
+
+    <div class="menu-card">
+
+      <div class="eyebrow">
+        <span class="red-dot"></span>
+        MISTÉRIO • EXPLORAÇÃO • 3D
+      </div>
+
+      <h1>
+        ÚLTIMO<br>
+        <span>TREM</span>
+      </h1>
+
+      <div class="title-line"></div>
+
+      <p class="menu-subtitle">
+        ALGUMAS ESTAÇÕES NÃO FORAM FEITAS PARA SEREM ENCONTRADAS.
+      </p>
+
+      <p class="menu-story">
+        Yuri acorda sozinho em uma estação que deveria estar abandonada.
+        O relógio marca <strong>23:59</strong>.
+        Ao longe, um trem se aproxima — e alguém parece estar esperando por ele.
+      </p>
+
+      <div class="menu-actions">
+
+        <button id="newGameBtn" class="primary-action">
+          <span>▶</span>
+          INICIAR JOGO
+        </button>
+
+        <button id="continueBtn">
+          <span>↻</span>
+          CONTINUAR
+        </button>
+
+        <button id="deleteSaveBtn" class="secondary">
+          <span>×</span>
+          APAGAR SAVE
+        </button>
+
+      </div>
+
+      <div class="menu-footer">
+        <div><b>W A S D</b> mover</div>
+        <div><b>MOUSE</b> olhar</div>
+        <div><b>E</b> interagir</div>
+        <div><b>F</b> lanterna</div>
+      </div>
+
+    </div>
+
+    <div class="menu-warning">
+      NÃO ENTRE NO TREM ANTES DA MEIA-NOITE.
+    </div>
+
+    <div class="menu-version">
+      ÚLTIMO TREM • 3D
+    </div>
+
+  </div>
+
+
+  <div id="game" class="hidden">
+
+    <div id="hud">
+
+      <div class="hud-left">
+
+        <div class="title">
+          ÚLTIMO TREM
         </div>
+
+        <div id="location">
+          ESTAÇÃO CENTRAL
+        </div>
+
+        <div class="mission-box">
+          <span>MISSÃO ATUAL</span>
+          <strong id="missionText">
+            Descubra onde você está.
+          </strong>
+        </div>
+
+      </div>
+
+
+      <div class="hud-right">
+
+        <div>
+          ❤️ <span id="lives">3</span>
+        </div>
+
+        <div>
+          ⚡ <span id="energy">100</span>
+        </div>
+
+        <div>
+          🔎 <span id="clues">0</span>
+        </div>
+
+        <div>
+          🪙 <span id="coins">0</span>
+        </div>
+
+      </div>
+
+
+      <div id="crosshair">
+        +
+      </div>
+
+
+      <div id="interactionHint">
+        E • Interagir
+      </div>
+
+
+      <div id="notification"></div>
+
+
+      <div id="clockHud">
+        <span class="clock-label">HORA</span>
+        <strong>23:47</strong>
+      </div>
+
+
+      <div id="flashlightHud">
+        🔦 OFF
+      </div>
 
     </div>
 
 
-    <!-- =====================================================
-         TELA INICIAL
-    ====================================================== -->
+    <div id="dialogue" class="modal hidden">
 
-    <div id="menuScreen" class="hidden">
+      <div class="modal-card dialogue-card">
 
-        <div class="menu-background"></div>
-
-        <div class="menu-content">
-
-            <div class="menu-logo">
-                🚇
-            </div>
-
-            <p class="menu-small">
-                UMA HISTÓRIA ESCONDIDA SOB A CIDADE
-            </p>
-
-            <h1>
-                ÚLTIMO<br>
-                <span>TREM</span>
-            </h1>
-
-            <p class="menu-description">
-                Algumas estações nunca foram realmente fechadas.
-            </p>
-
-            <button id="newGameBtn" class="main-button">
-                INICIAR JOGO
-            </button>
-
-            <button id="continueBtn" class="secondary-button">
-                CONTINUAR
-            </button>
-
-            <button id="deleteSaveBtn" class="text-button">
-                APAGAR PROGRESSO
-            </button>
-
-            <div class="controls-info">
-                <span>W A S D</span> Mover
-                <span>SHIFT</span> Correr
-                <span>F</span> Lanterna
-                <span>E</span> Interagir
-                <span>I</span> Inventário
-            </div>
-
+        <div id="dialogueName" class="dialogue-name">
+          Olivia
         </div>
+
+        <div id="dialogueText" class="dialogue-text"></div>
+
+        <div id="dialogueChoices" class="choices"></div>
+
+        <button id="dialogueNext">
+          Continuar
+        </button>
+
+      </div>
 
     </div>
 
 
-    <!-- =====================================================
-         JOGO
-    ====================================================== -->
+    <div id="inventory" class="modal hidden">
 
-    <main id="gameContainer" class="hidden"></main>
+      <div class="modal-card">
 
+        <div class="modal-header">
 
-    <!-- =====================================================
-         HUD
-    ====================================================== -->
+          <h2>
+            Inventário
+          </h2>
 
-    <div id="hud" class="hidden">
-
-        <div class="hud-location">
-            <span>LOCALIZAÇÃO</span>
-            <strong id="locationText">
-                ESTAÇÃO CENTRAL
-            </strong>
-        </div>
-
-
-        <div class="hud-time">
-            <span>HORÁRIO</span>
-            <strong id="clockText">
-                00:00
-            </strong>
-        </div>
-
-
-        <div class="hud-stats">
-
-            <div class="stat">
-                <span>♥</span>
-                <strong id="healthText">100</strong>
-                <small>VIDA</small>
-            </div>
-
-            <div class="stat">
-                <span>⚡</span>
-                <strong id="energyText">100</strong>
-                <small>ENERGIA</small>
-            </div>
+          <button
+            class="icon-btn"
+            data-close="inventory">
+            ×
+          </button>
 
         </div>
 
+        <div id="inventoryGrid" class="inventory-grid"></div>
 
-        <div class="hud-actions">
-
-            <button id="flashlightButton">
-                🔦
-                <span>LANTERNA</span>
-                <b>F</b>
-            </button>
-
-            <button id="inventoryButton">
-                🎒
-                <span>INVENTÁRIO</span>
-                <b>I</b>
-            </button>
-
-            <button id="missionsButton">
-                📖
-                <span>MISSÕES</span>
-                <b>M</b>
-            </button>
-
-        </div>
-
-
-        <div id="objectiveBox">
-
-            <small>
-                OBJETIVO ATUAL
-            </small>
-
-            <strong id="objectiveText">
-                Explore a Estação Central e descubra por que ela foi abandonada.
-            </strong>
-
-        </div>
-
-
-        <div id="interactionHint">
-            Pressione <b>E</b> para interagir
-        </div>
-
-
-        <div id="crosshair">
-            +
-        </div>
-
-
-        <div id="controlsHint">
-            <b>WASD</b> Mover
-            <b>SHIFT</b> Correr
-            <b>E</b> Interagir
-        </div>
+      </div>
 
     </div>
 
 
-    <!-- =====================================================
-         DIÁLOGO
-    ====================================================== -->
+    <div id="missions" class="modal hidden">
 
-    <div id="dialogueModal" class="modal hidden">
+      <div class="modal-card">
 
-        <div class="dialogue-box">
+        <div class="modal-header">
 
-            <div class="dialogue-header">
+          <h2>
+            Missões
+          </h2>
 
-                <div id="dialogueAvatar">
-                    👤
-                </div>
-
-                <div>
-                    <small>CONVERSA</small>
-                    <h2 id="dialogueName">
-                        -
-                    </h2>
-                </div>
-
-            </div>
-
-            <div class="dialogue-text" id="dialogueText">
-                -
-            </div>
-
-            <div class="dialogue-footer">
-
-                <span id="dialogueProgress">
-                    1 / 1
-                </span>
-
-                <button id="dialogueNext">
-                    CONTINUAR
-                </button>
-
-            </div>
+          <button
+            class="icon-btn"
+            data-close="missions">
+            ×
+          </button>
 
         </div>
+
+        <div id="missionsList" class="missions-list"></div>
+
+      </div>
 
     </div>
 
 
-    <!-- =====================================================
-         INVENTÁRIO
-    ====================================================== -->
+    <div id="puzzle" class="modal hidden">
 
-    <div id="inventoryModal" class="modal hidden">
+      <div class="modal-card puzzle-card">
 
-        <div class="panel">
+        <div class="modal-header">
 
-            <button class="close-button" id="closeInventory">
-                ×
-            </button>
+          <h2 id="puzzleTitle">
+            Terminal
+          </h2>
 
-            <div class="panel-title">
-                <span>🎒</span>
-
-                <div>
-                    <small>SEUS OBJETOS</small>
-                    <h2>INVENTÁRIO</h2>
-                </div>
-            </div>
-
-            <div id="inventoryList" class="inventory-grid"></div>
-
-            <div class="item-help">
-                <strong>Como usar um objeto?</strong>
-                <p>
-                    Clique no objeto para ver sua descrição e,
-                    quando possível, use-o diretamente.
-                </p>
-            </div>
+          <button
+            class="icon-btn"
+            data-close="puzzle">
+            ×
+          </button>
 
         </div>
+
+        <p id="puzzleText"></p>
+
+        <input
+          id="puzzleInput"
+          maxlength="8"
+          autocomplete="off"
+        />
+
+        <button id="puzzleSubmit">
+          Confirmar
+        </button>
+
+        <div id="puzzleFeedback"></div>
+
+      </div>
 
     </div>
 
 
-    <!-- =====================================================
-         ITEM
-    ====================================================== -->
+    <div id="trainMenu" class="modal hidden">
 
-    <div id="itemModal" class="modal hidden">
+      <div class="modal-card">
 
-        <div class="item-detail">
+        <div class="modal-header">
 
-            <button class="close-button" id="closeItem">
-                ×
-            </button>
+          <h2>
+            Mapa do Último Trem
+          </h2>
 
-            <div id="itemIcon" class="big-item-icon">
-                🎫
-            </div>
-
-            <h2 id="itemName">
-                Bilhete
-            </h2>
-
-            <p id="itemDescription">
-                -
-            </p>
-
-            <button id="useItemButton" class="main-button">
-                USAR OBJETO
-            </button>
-
-            <button id="closeItemBottom" class="secondary-button">
-                VOLTAR
-            </button>
+          <button
+            class="icon-btn"
+            data-close="trainMenu">
+            ×
+          </button>
 
         </div>
+
+        <p class="muted">
+          O condutor não pergunta para onde você quer ir.
+          Ele pergunta o que você está preparado para encontrar.
+        </p>
+
+        <div id="destinations" class="destinations"></div>
+
+      </div>
 
     </div>
 
 
-    <!-- =====================================================
-         MISSÕES
-    ====================================================== -->
+    <div id="ending" class="modal hidden">
 
-    <div id="missionsModal" class="modal hidden">
+      <div class="modal-card ending-card">
 
-        <div class="panel">
-
-            <button class="close-button" id="closeMissions">
-                ×
-            </button>
-
-            <div class="panel-title">
-                <span>📖</span>
-
-                <div>
-                    <small>DIÁRIO</small>
-                    <h2>MISSÕES</h2>
-                </div>
-            </div>
-
-            <div id="missionsList"></div>
-
+        <div class="eyebrow">
+          FINAL DESBLOQUEADO
         </div>
+
+        <h2 id="endingTitle">
+          A Verdade
+        </h2>
+
+        <p id="endingText"></p>
+
+        <button id="endingRestart">
+          Jogar novamente
+        </button>
+
+      </div>
 
     </div>
 
 
-    <!-- =====================================================
-         BILHETE
-    ====================================================== -->
+    <div id="mobileControls">
 
-    <div id="ticketModal" class="modal hidden">
+      <div class="dpad">
 
-        <div class="ticket-detail">
+        <button data-move="forward">
+          ▲
+        </button>
 
-            <button class="close-button" id="closeTicket">
-                ×
-            </button>
+        <div>
 
-            <div class="ticket">
+          <button data-move="left">
+            A
+          </button>
 
-                <div class="ticket-top">
-                    METRÔ CENTRAL
-                </div>
+          <button data-move="back">
+            ▼
+          </button>
 
-                <div class="ticket-main">
-
-                    <div class="ticket-number">
-                        0000
-                    </div>
-
-                    <div class="ticket-title">
-                        ÚLTIMO TREM
-                    </div>
-
-                    <div class="ticket-route">
-                        ESTAÇÃO CENTRAL
-                        <span>→</span>
-                        SALA 0
-                    </div>
-
-                    <div class="ticket-date">
-                        DATA: 31 / 12 / 1999
-                    </div>
-
-                    <div class="ticket-warning">
-                        ESTE BILHETE NÃO DEVERIA EXISTIR.
-                    </div>
-
-                </div>
-
-                <div class="ticket-bottom">
-                    NÃO VALIDAR
-                </div>
-
-            </div>
-
-            <p>
-                O número parece importante.
-                Talvez alguém na estação saiba o que ele significa.
-            </p>
-
-            <button id="closeTicketBottom" class="secondary-button">
-                FECHAR
-            </button>
+          <button data-move="right">
+            D
+          </button>
 
         </div>
+
+      </div>
+
+      <button id="mobileInteract">
+        E
+      </button>
 
     </div>
 
-
-    <!-- =====================================================
-         PUZZLE
-    ====================================================== -->
-
-    <div id="puzzleModal" class="modal hidden">
-
-        <div class="panel puzzle-panel">
-
-            <button class="close-button" id="closePuzzle">
-                ×
-            </button>
-
-            <small>
-                TERMINAL
-            </small>
-
-            <h2 id="puzzleTitle">
-                CÓDIGO
-            </h2>
-
-            <p id="puzzleDescription">
-                Digite o código.
-            </p>
-
-            <input
-                id="puzzleInput"
-                maxlength="4"
-                inputmode="numeric"
-                autocomplete="off"
-            >
-
-            <button id="puzzleSubmit" class="main-button">
-                CONFIRMAR
-            </button>
-
-            <p id="puzzleMessage"></p>
-
-        </div>
-
-    </div>
+  </div>
 
 
-    <!-- =====================================================
-         TREM
-    ====================================================== -->
-
-    <div id="trainModal" class="modal hidden">
-
-        <div class="panel">
-
-            <button class="close-button" id="closeTrain">
-                ×
-            </button>
-
-            <small>
-                ÚLTIMO TREM
-            </small>
-
-            <h2>
-                PARA ONDE?
-            </h2>
-
-            <p>
-                O relógio marca 00:00.
-                As portas estão abertas.
-            </p>
-
-            <div class="train-destinations">
-
-                <button data-destination="rain">
-                    🌧️ Distrito da Chuva
-                </button>
-
-                <button data-destination="park">
-                    🏮 Parque das Lanternas
-                </button>
-
-                <button data-destination="hospital">
-                    🏥 Hospital São Lucas
-                </button>
-
-                <button data-destination="oldtown">
-                    🏚️ Cidade Antiga
-                </button>
-
-                <button data-destination="tunnels">
-                    🚇 Túneis
-                </button>
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         FINAL
-    ====================================================== -->
-
-    <div id="endingModal" class="modal hidden">
-
-        <div class="ending-box">
-
-            <div class="ending-symbol">
-                🚇
-            </div>
-
-            <small>
-                FIM
-            </small>
-
-            <h1 id="endingTitle">
-                -
-            </h1>
-
-            <p id="endingText">
-                -
-            </p>
-
-            <button
-                id="endingRestart"
-                class="main-button"
-            >
-                JOGAR NOVAMENTE
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         CONTROLES MOBILE
-    ====================================================== -->
-
-    <div id="mobileControls" class="hidden">
-
-        <div class="mobile-left">
-
-            <button id="mobileForward">
-                ▲
-            </button>
-
-            <div>
-                <button id="mobileLeft">
-                    ◀
-                </button>
-
-                <button id="mobileBackward">
-                    ▼
-                </button>
-
-                <button id="mobileRight">
-                    ▶
-                </button>
-            </div>
-
-        </div>
-
-        <div class="mobile-right">
-
-            <button id="mobileInteract">
-                E
-            </button>
-
-            <button id="mobileFlashlight">
-                🔦
-            </button>
-
-            <button id="mobileInventory">
-                🎒
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         SCRIPT
-    ====================================================== -->
-
-    <script type="module" src="script.js"></script>
+  <script type="module" src="script.js"></script>
 
 </body>
 </html>
