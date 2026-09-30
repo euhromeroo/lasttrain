@@ -1,2735 +1,1644 @@
-/* =====================================================
-   NÚMERO DESCONHECIDO
-   CAPÍTULO 1 — A CAIXA AZUL
-===================================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
+:root {
+    --bg: #030507;
+    --phone: #10151b;
+    --header: #151b22;
+    --text: #edf1ee;
+    --muted: #89918e;
+    --green: #718d79;
+    --green-dark: #283a2e;
+    --bubble: #202730;
+    --player: #294034;
+}
 
-/* =====================================================
-   ELEMENTOS
-===================================================== */
+body {
+    min-height: 100vh;
 
-const startScreen = document.getElementById("startScreen");
-const gameScreen = document.getElementById("gameScreen");
-const endScreen = document.getElementById("endScreen");
+    background:
+        radial-gradient(circle at center, #20272b, #07090c 65%, #020304);
 
-const startButton = document.getElementById("startButton");
-const restartButton = document.getElementById("restartButton");
+    color: var(--text);
 
-const homeScreen = document.getElementById("homeScreen");
+    font-family: Arial, Helvetica, sans-serif;
 
-const chat = document.getElementById("chat");
-const choices = document.getElementById("choices");
-const choiceButtons = document.getElementById("choiceButtons");
+    overflow: hidden;
+}
 
-const phoneClock = document.getElementById("phoneClock");
-const homeTime = document.getElementById("homeTime");
+button {
+    font-family: inherit;
+}
 
-const notificationArea = document.getElementById("notificationArea");
-
-const messageBadge = document.getElementById("messageBadge");
-const clueBadge = document.getElementById("clueBadge");
-
-const cluesList = document.getElementById("cluesList");
-
-const lockedPhoto = document.getElementById("lockedPhoto");
-const photoUnlocked = document.getElementById("photoUnlocked");
-
-const playerNotes = document.getElementById("playerNotes");
-
-const endTitle = document.getElementById("endTitle");
-const endText = document.getElementById("endText");
-
-const callButton = document.getElementById("callButton");
-
-
-/* =====================================================
-   ESTADO DO JOGO
-===================================================== */
-
-let gameStarted = false;
-
-let currentHour = 23;
-let currentMinute = 41;
-
-let trust = 0;
-let suspicion = 0;
-
-let clues = [];
-
-let photoUnlockedState = false;
-
-let boxConfirmed = false;
-let photoInspected = false;
-let callMade = false;
-let askedName = false;
-let discoveredDate = false;
-let discoveredInitials = false;
-
-let storyProgress = 0;
-
-
-/* =====================================================
-   NAVEGAÇÃO
-===================================================== */
-
-const apps = document.querySelectorAll("[data-app]");
-
-apps.forEach(button => {
-
-    button.addEventListener("click", () => {
-
-        openApp(button.dataset.app);
-
-    });
-
-});
-
-
-const backButtons = document.querySelectorAll("[data-back]");
-
-backButtons.forEach(button => {
-
-    button.addEventListener("click", () => {
-
-        openApp("home");
-
-    });
-
-});
-
-
-function openApp(appName) {
-
-    document.querySelectorAll(".phone-screen").forEach(screen => {
-
-        screen.classList.add("hidden");
-
-    });
-
-    if (appName === "home") {
-
-        homeScreen.classList.remove("hidden");
-
-        return;
-    }
-
-    const target = document.getElementById(`${appName}App`);
-
-    if (!target) return;
-
-    target.classList.remove("hidden");
-
-    if (appName === "messages") {
-
-        messageBadge.classList.add("hidden");
-
-        setTimeout(scrollChat, 100);
-
-    }
-
-    if (appName === "clues") {
-
-        renderClues();
-
-    }
-
-    if (appName === "gallery") {
-
-        updateGallery();
-
-    }
-
+.hidden {
+    display: none !important;
 }
 
 
-/* =====================================================
-   RELÓGIO
-===================================================== */
+/* =========================
+   TELAS
+========================= */
 
-function updateClock() {
+.screen {
+    width: 100%;
+    height: 100vh;
 
-    const hour = String(currentHour).padStart(2, "0");
-    const minute = String(currentMinute).padStart(2, "0");
-
-    const time = `${hour}:${minute}`;
-
-    phoneClock.textContent = time;
-    homeTime.textContent = time;
-
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 
-function advanceTime(minutes) {
+/* =========================
+   TELA INICIAL
+========================= */
 
-    currentMinute += minutes;
+.start-screen {
+    background:
+        radial-gradient(
+            circle,
+            rgba(90, 115, 98, .15),
+            transparent 40%
+        ),
+        #040608;
+}
 
-    while (currentMinute >= 60) {
+.start-content {
+    text-align: center;
 
-        currentMinute -= 60;
-        currentHour++;
+    animation: appear 1s ease;
+}
 
-        if (currentHour >= 24) {
-            currentHour = 0;
-        }
+.mystery-icon {
+    width: 95px;
+    height: 95px;
 
-    }
+    border: 1px solid #647169;
+    border-radius: 50%;
 
-    updateClock();
+    display: flex;
+    justify-content: center;
+    align-items: center;
 
+    margin: auto auto 30px;
+
+    font-size: 45px;
+
+    color: #b7c1ba;
+
+    box-shadow: 0 0 35px rgba(120,150,130,.12);
+}
+
+.start-content h1 {
+    font-size: clamp(38px, 8vw, 70px);
+
+    letter-spacing: 8px;
+
+    font-weight: 300;
+
+    line-height: 1.05;
+}
+
+.start-content p {
+    color: #92999f;
+
+    line-height: 1.7;
+
+    margin-top: 25px;
+}
+
+.start-content small {
+    display: block;
+
+    margin-top: 25px;
+
+    color: #535b61;
+
+    letter-spacing: 1px;
+}
+
+.main-button {
+    margin-top: 35px;
+
+    padding: 16px 42px;
+
+    background: rgba(63, 83, 70, .35);
+
+    border: 1px solid #617166;
+
+    border-radius: 6px;
+
+    color: white;
+
+    cursor: pointer;
+
+    letter-spacing: 3px;
+
+    transition: .3s;
+}
+
+.main-button:hover {
+    background: rgba(90,120,98,.45);
+
+    transform: translateY(-2px);
+
+    box-shadow: 0 0 30px rgba(100,130,110,.15);
 }
 
 
-/* =====================================================
-   CHAT
-===================================================== */
+/* =========================
+   CELULAR
+========================= */
 
-function clearChat() {
+.game-screen {
+    width: 100%;
+    height: 100vh;
 
-    chat.innerHTML = `
-        <div class="date-divider">
-            HOJE
-        </div>
-    `;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
+.phone {
+    width: min(430px, 100vw);
+
+    height: min(850px, 100vh);
+
+    background: var(--phone);
+
+    overflow: hidden;
+
+    position: relative;
+
+    border-radius: 22px;
+
+    box-shadow:
+        0 0 80px rgba(0,0,0,.8);
+
+    display: flex;
+
+    flex-direction: column;
 }
 
 
-function addMessage(text, sender = "stranger") {
+/* =========================
+   STATUS BAR
+========================= */
 
-    const message = document.createElement("div");
+.status-bar {
+    height: 32px;
 
-    message.className = `message ${sender}`;
+    background: #0d1217;
 
-    const time =
-        `${String(currentHour).padStart(2, "0")}:${String(currentMinute).padStart(2, "0")}`;
+    padding: 0 18px;
 
-    message.innerHTML = `
-        ${text}
-        <span class="message-time">${time}</span>
-    `;
+    display: flex;
 
-    chat.appendChild(message);
+    align-items: center;
 
-    scrollChat();
+    justify-content: space-between;
 
+    font-size: 12px;
+
+    z-index: 20;
+}
+
+.status-right {
+    display: flex;
+
+    gap: 9px;
+
+    align-items: center;
+}
+
+.battery {
+    width: 20px;
+    height: 10px;
+
+    border: 1px solid #aab1b0;
+
+    border-radius: 2px;
+
+    position: relative;
+}
+
+.battery::after {
+    content: "";
+
+    width: 2px;
+    height: 5px;
+
+    background: #aab1b0;
+
+    position: absolute;
+
+    right: -3px;
+    top: 2px;
+}
+
+#batteryLevel {
+    width: 80%;
+    height: 100%;
+
+    background: #aab1b0;
 }
 
 
-function scrollChat() {
+/* =========================
+   TELAS INTERNAS
+========================= */
 
-    setTimeout(() => {
+.phone-screen {
+    flex: 1;
 
-        chat.scrollTop = chat.scrollHeight;
+    position: relative;
 
-    }, 50);
-
+    overflow: hidden;
 }
 
 
-function showTyping(duration = 1200) {
+/* =========================
+   HOME
+========================= */
 
-    return new Promise(resolve => {
+.wallpaper {
+    height: 100%;
 
-        const typing = document.createElement("div");
+    padding: 35px 20px 80px;
 
-        typing.className = "typing";
+    background:
+        radial-gradient(
+            circle at 50% 20%,
+            rgba(78,97,87,.3),
+            transparent 35%
+        ),
+        linear-gradient(
+            160deg,
+            #151c20,
+            #070b0e 70%
+        );
 
-        typing.innerHTML = `
-            <span></span>
-            <span></span>
-            <span></span>
-        `;
+    position: relative;
+}
 
-        chat.appendChild(typing);
+.home-time {
+    text-align: center;
 
-        scrollChat();
+    font-size: 52px;
 
-        setTimeout(() => {
+    font-weight: 200;
 
-            typing.remove();
+    letter-spacing: 2px;
+}
 
-            resolve();
+.home-date {
+    text-align: center;
 
-        }, duration);
+    color: #8d9693;
 
-    });
+    margin-top: 5px;
 
+    font-size: 12px;
+
+    letter-spacing: 2px;
 }
 
 
-function sleep(ms) {
-
-    return new Promise(resolve => {
-
-        setTimeout(resolve, ms);
-
-    });
-
-}
-
-
-/* =====================================================
-   ESCOLHAS
-===================================================== */
-
-function showChoices(options) {
-
-    choices.classList.remove("hidden");
-
-    choiceButtons.innerHTML = "";
-
-    options.forEach(option => {
-
-        const button = document.createElement("button");
-
-        button.className = "choice-button";
-
-        button.textContent = option.text;
-
-        button.addEventListener("click", async () => {
-
-            choices.classList.add("hidden");
-
-            addMessage(option.text, "player");
-
-            advanceTime(1);
-
-            await sleep(500);
-
-            await option.action();
-
-        });
-
-        choiceButtons.appendChild(button);
-
-    });
-
-}
-
-
-/* =====================================================
+/* =========================
    NOTIFICAÇÕES
-===================================================== */
+========================= */
 
-function notify(title, text) {
+.notification-area {
+    min-height: 70px;
 
-    notificationArea.innerHTML = `
-        <div class="notification">
-            <strong>${title}</strong>
-            <span>${text}</span>
-        </div>
-    `;
+    margin-top: 30px;
+}
 
-    setTimeout(() => {
+.notification {
+    background: rgba(24,30,35,.92);
 
-        notificationArea.innerHTML = "";
+    border: 1px solid #343d43;
 
-    }, 6000);
+    border-radius: 13px;
 
+    padding: 12px;
+
+    box-shadow: 0 10px 30px rgba(0,0,0,.3);
+
+    animation: notification .5s ease;
+}
+
+.notification strong {
+    display: block;
+
+    font-size: 11px;
+
+    margin-bottom: 5px;
+}
+
+.notification span {
+    color: #b1b8b6;
+
+    font-size: 12px;
 }
 
 
-/* =====================================================
-   PISTAS
-===================================================== */
+/* =========================
+   APLICATIVOS
+========================= */
 
-function addClue(title, description) {
+.apps {
+    display: grid;
 
-    if (clues.some(clue => clue.title === title)) {
-        return;
-    }
+    grid-template-columns: repeat(4, 1fr);
 
-    clues.push({
-        title,
-        description
-    });
+    gap: 25px 12px;
 
-    clueBadge.textContent = clues.length;
+    margin-top: 35px;
+}
 
-    clueBadge.classList.remove("hidden");
+.app {
+    border: none;
 
-    renderClues();
+    background: transparent;
 
-    notify(
-        "Nova pista encontrada",
-        title
-    );
+    color: white;
 
+    position: relative;
+
+    cursor: pointer;
+}
+
+.app-icon {
+    width: 54px;
+    height: 54px;
+
+    margin: auto;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 14px;
+
+    font-size: 27px;
+
+    box-shadow: 0 7px 15px rgba(0,0,0,.25);
+}
+
+.messages-icon {
+    background: #314a3b;
+}
+
+.gallery-icon {
+    background: #4a4230;
+}
+
+.phone-icon {
+    background: #35483b;
+
+    font-size: 28px;
+}
+
+.clue-icon {
+    background: #383c43;
+}
+
+.notes-icon {
+    background: #4a4532;
+}
+
+.app span:last-of-type {
+    display: block;
+
+    margin-top: 7px;
+
+    font-size: 10px;
+
+    color: #c6cbc9;
+}
+
+.app b {
+    position: absolute;
+
+    top: -5px;
+    right: 8px;
+
+    width: 17px;
+    height: 17px;
+
+    background: #a65454;
+
+    border-radius: 50%;
+
+    font-size: 9px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
 }
 
 
-function renderClues() {
+/* =========================
+   DOCK
+========================= */
 
-    if (clues.length === 0) {
+.dock {
+    position: absolute;
 
-        cluesList.innerHTML = `
-            <div class="empty-clues">
-                Nenhuma pista encontrada.
-            </div>
-        `;
+    bottom: 12px;
+    left: 15px;
+    right: 15px;
 
-        return;
-    }
+    height: 62px;
 
-    cluesList.innerHTML = "";
+    background: rgba(25,31,36,.78);
 
-    clues.forEach(clue => {
+    border: 1px solid #343b40;
 
-        const element = document.createElement("div");
+    border-radius: 20px;
 
-        element.className = "clue";
+    display: flex;
 
-        element.innerHTML = `
-            <strong>${clue.title}</strong>
-            <p>${clue.description}</p>
-        `;
+    align-items: center;
 
-        cluesList.appendChild(element);
+    justify-content: space-around;
 
-    });
+    backdrop-filter: blur(15px);
+}
 
+.dock button {
+    border: none;
+
+    background: transparent;
+
+    font-size: 23px;
+
+    cursor: pointer;
 }
 
 
-/* =====================================================
+/* =========================
+   APP HEADER
+========================= */
+
+.app-screen {
+    background:
+        radial-gradient(circle at top, #1b2228, #0d1115 60%);
+
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.app-header {
+    height: 68px;
+
+    padding: 0 15px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    background: #141a20;
+
+    border-bottom: 1px solid #293038;
+}
+
+.simple-header {
+    font-size: 15px;
+}
+
+.back-button {
+    border: none;
+
+    background: transparent;
+
+    color: #b3bdb7;
+
+    font-size: 36px;
+
+    cursor: pointer;
+}
+
+.header-contact {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+.contact-avatar {
+    width: 40px;
+    height: 40px;
+
+    border-radius: 50%;
+
+    border: 1px solid #5a6760;
+
+    background: #20282e;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+}
+
+.header-contact strong {
+    display: block;
+
+    font-size: 13px;
+}
+
+.header-contact small {
+    color: #708077;
+
+    font-size: 10px;
+}
+
+
+/* =========================
+   CHAT
+========================= */
+.chat {
+    flex: 1;
+    min-height: 0;
+
+    overflow-y: auto;
+
+    padding: 18px 14px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 9px;
+}
+
+.chat::-webkit-scrollbar {
+    width: 3px;
+}
+
+.chat::-webkit-scrollbar-thumb {
+    background: #39423e;
+}
+
+.date-divider {
+    text-align: center;
+
+    color: #646d72;
+
+    font-size: 9px;
+
+    letter-spacing: 2px;
+
+    margin-bottom: 12px;
+}
+
+.message {
+    max-width: 80%;
+
+    padding: 11px 13px;
+
+    border-radius: 12px;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+
+    animation: messageIn .35s ease;
+}
+
+.message.stranger {
+    align-self: flex-start;
+
+    background: var(--bubble);
+
+    border-bottom-left-radius: 3px;
+}
+
+.message.player {
+    align-self: flex-end;
+
+    background: var(--player);
+
+    border-bottom-right-radius: 3px;
+}
+
+.message-time {
+    display: block;
+
+    text-align: right;
+
+    color: #6f7977;
+
+    font-size: 8px;
+
+    margin-top: 4px;
+}
+
+.typing {
+    background: var(--bubble);
+
+    padding: 10px 14px;
+
+    width: fit-content;
+
+    border-radius: 12px;
+
+    display: flex;
+
+    gap: 4px;
+}
+
+.typing span {
+    width: 5px;
+    height: 5px;
+
+    background: #7e8883;
+
+    border-radius: 50%;
+
+    animation: typing 1s infinite;
+}
+
+.typing span:nth-child(2) {
+    animation-delay: .15s;
+}
+
+.typing span:nth-child(3) {
+    animation-delay: .3s;
+}
+
+
+/* =========================
+   ESCOLHAS
+========================= */
+
+.choices {
+    flex-shrink: 0;
+
+    padding: 9px 12px;
+
+    background: #10151a;
+
+    border-top: 1px solid #2b3238;
+
+    position: relative;
+
+    z-index: 10;
+}
+
+.choices > span {
+    display: block;
+
+    text-align: center;
+
+    color: #69736e;
+
+    font-size: 9px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1px;
+}
+
+.choice-button {
+    width: 100%;
+
+    margin-top: 6px;
+
+    padding: 10px;
+
+    border-radius: 7px;
+
+    background: #1d2821;
+
+    border: 1px solid #3e4f43;
+
+    color: #e1e8e3;
+
+    cursor: pointer;
+
+    font-size: 11px;
+}
+
+.choice-button:hover {
+    background: #2b3b30;
+}
+
+
+/* =========================
+   BARRA
+========================= */
+
+.message-bar {
+    position: relative;
+
+    flex-shrink: 0;
+
+    left: auto;
+    right: auto;
+    bottom: auto;
+
+    height: 55px;
+
+    background: #11171c;
+
+    border-top: 1px solid #293138;
+
+    padding: 9px;
+
+    display: flex;
+
+    gap: 8px;
+}
+
+.message-bar div {
+    flex: 1;
+
+    background: #20272d;
+
+    border-radius: 20px;
+
+    display: flex;
+
+    align-items: center;
+
+    padding-left: 15px;
+
+    color: #697279;
+
+    font-size: 11px;
+}
+
+.message-bar button {
+    width: 37px;
+
+    border-radius: 50%;
+
+    border: none;
+
+    background: #344b3c;
+
+    color: white;
+}
+
+
+/* =========================
    GALERIA
-===================================================== */
+========================= */
 
-function updateGallery() {
-
-    if (photoUnlockedState) {
-
-        lockedPhoto.classList.add("hidden");
-
-        photoUnlocked.classList.remove("hidden");
-
-    } else {
-
-        lockedPhoto.classList.remove("hidden");
-
-        photoUnlocked.classList.add("hidden");
-
-    }
-
+.gallery-content {
+    padding: 25px;
 }
 
-
-function unlockPhoto() {
-
-    if (photoUnlockedState) return;
-
-    photoUnlockedState = true;
-
-    updateGallery();
-
-    addClue(
-        "Fotografia de 14 de outubro",
-        "Uma pessoa aparece ao fundo da fotografia. A imagem parece ter sido tirada às 22:18."
-    );
-
-}
-
-
-/* =====================================================
-   INÍCIO
-===================================================== */
-
-async function startGame() {
-
-    if (gameStarted) return;
-
-    gameStarted = true;
-
-    startScreen.classList.add("hidden");
-    endScreen.classList.add("hidden");
-
-    gameScreen.classList.remove("hidden");
-
-    currentHour = 23;
-    currentMinute = 41;
-
-    trust = 0;
-    suspicion = 0;
-
-    clues = [];
-
-    boxConfirmed = false;
-    photoInspected = false;
-    callMade = false;
-    askedName = false;
-    discoveredDate = false;
-    discoveredInitials = false;
-
-    storyProgress = 0;
-
-    messageBadge.classList.remove("hidden");
-
-    clueBadge.classList.add("hidden");
-    clueBadge.textContent = "0";
-
-    notificationArea.innerHTML = "";
-
-    playerNotes.textContent =
-        "Ainda não escrevi nada...";
-
-    updateClock();
-
-    renderClues();
-
-    clearChat();
-
-    openApp("messages");
-
-    await sleep(1000);
-
-    await showTyping(1500);
-
-    addMessage(
-        "Não conte para ninguém que eu estou falando com você."
-    );
-
-    advanceTime(1);
-
-    await sleep(1000);
-
-    await showTyping(1400);
-
-    addMessage(
-        "Eu sei que isso parece estranho."
-    );
-
-    advanceTime(1);
-
-    await sleep(900);
-
-    await showTyping(1400);
-
-    addMessage(
-        "Mas eu preciso saber se a caixa azul ainda está com você."
-    );
-
-    advanceTime(1);
-
-    showChoices([
-
-        {
-            text: "Quem é você?",
-            action: firstWho
-        },
-
-        {
-            text: "Como conseguiu meu número?",
-            action: firstHow
-        },
-
-        {
-            text: "Que caixa azul?",
-            action: firstBox
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   PRIMEIRA ESCOLHA — QUEM?
-===================================================== */
-
-async function firstWho() {
-
-    suspicion++;
-
-    askedName = true;
-
-    await showTyping(1400);
-
-    addMessage(
-        "Você realmente não reconhece o número?"
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Meu nome não importa agora."
-    );
-
-    advanceTime(1);
-
-    await sleep(800);
-
-    addMessage(
-        "O que importa é o que está dentro daquela caixa."
-    );
-
-    addClue(
-        "O desconhecido evita dizer o próprio nome",
-        "Quando você perguntou quem ele é, ele mudou de assunto e voltou a falar sobre a caixa azul."
-    );
-
-    await sleep(900);
-
-    showChoices([
-
-        {
-            text: "Então me diga o que tem dentro dela.",
-            action: askBoxContent
-        },
-
-        {
-            text: "Se você não diz quem é, não vou confiar em você.",
-            action: challengeTrust
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   PRIMEIRA ESCOLHA — COMO?
-===================================================== */
-
-async function firstHow() {
-
-    trust++;
-
-    await showTyping(1400);
-
-    addMessage(
-        "Eu consegui seu número através de uma pessoa que você conhece."
-    );
-
-    advanceTime(1);
-
-    await sleep(800);
-
-    addMessage(
-        "Não vou dizer quem."
-    );
-
-    advanceTime(1);
-
-    await sleep(800);
-
-    addMessage(
-        "Ainda não."
-    );
-
-    addClue(
-        "Alguém conhecido passou seu número",
-        "O desconhecido afirma que recebeu seu número através de alguém que você conhece."
-    );
-
-    await sleep(900);
-
-    showChoices([
-
-        {
-            text: "Pelo menos me diga se essa pessoa é alguém próximo de mim.",
-            action: askAboutPerson
-        },
-
-        {
-            text: "Volte a falar sobre a caixa.",
-            action: askBoxContent
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   PRIMEIRA ESCOLHA — CAIXA
-===================================================== */
-
-async function firstBox() {
-
-    suspicion++;
-
-    await showTyping(1300);
-
-    addMessage(
-        "Não faça isso."
-    );
-
-    advanceTime(1);
-
-    await sleep(800);
-
-    addMessage(
-        "Não finja que não sabe."
-    );
-
-    advanceTime(1);
-
-    await sleep(900);
-
-    addMessage(
-        "Ela está no seu quarto."
-    );
-
-    addClue(
-        "Ele conhece detalhes da sua casa",
-        "O desconhecido afirma saber onde a caixa azul está."
-    );
-
-    await sleep(900);
-
-    showChoices([
-
-        {
-            text: "Como você sabe onde ela está?",
-            action: askHowKnows
-        },
-
-        {
-            text: "O que tem dentro dela?",
-            action: askBoxContent
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   CONTEÚDO DA CAIXA
-===================================================== */
-
-async function askBoxContent() {
-
-    await showTyping(1400);
-
-    addMessage(
-        "Uma fotografia."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "E uma coisa que você provavelmente não vai reconhecer."
-    );
-
-    advanceTime(1);
-
-    await sleep(800);
-
-    addMessage(
-        "Mas não abra a caixa ainda."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "O conteúdo da caixa",
-        "Segundo o desconhecido, há uma fotografia e outro objeto dentro da caixa."
-    );
-
-    await sleep(900);
-
-    showChoices([
-
-        {
-            text: "Vou abrir.",
-            action: openBox
-        },
-
-        {
-            text: "Por que não posso abrir?",
-            action: whyNotOpen
-        },
-
-        {
-            text: "Quero saber o que é o outro objeto.",
-            action: otherObject
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   POR QUE NÃO ABRIR?
-===================================================== */
-
-async function whyNotOpen() {
-
-    suspicion++;
-
-    await showTyping(1400);
-
-    addMessage(
-        "Porque depois que você olhar, não vai conseguir fingir que não sabe."
-    );
-
-    advanceTime(1);
-
-    await sleep(800);
-
-    addMessage(
-        "E eu preciso que você tenha certeza antes de continuar."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "Não existe como voltar atrás",
-        "O desconhecido insiste que abrir a caixa mudará o que você sabe sobre a situação."
-    );
-
-    await sleep(800);
-
-    showChoices([
-
-        {
-            text: "Eu já decidi. Vou abrir.",
-            action: openBox
-        },
-
-        {
-            text: "Você está tentando me assustar?",
-            action: accuse
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   OUTRO OBJETO
-===================================================== */
-
-async function otherObject() {
-
-    await showTyping(1300);
-
-    addMessage(
-        "Uma moeda."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Uma moeda antiga."
-    );
-
-    advanceTime(1);
-
-    await sleep(800);
-
-    addMessage(
-        "Ela tem duas letras gravadas."
-    );
-
-    addClue(
-        "A moeda",
-        "Dentro da caixa existe uma moeda antiga com duas letras gravadas."
-    );
-
-    discoveredInitials = true;
-
-    await sleep(900);
-
-    showChoices([
-
-        {
-            text: "Quais letras?",
-            action: askInitials
-        },
-
-        {
-            text: "Vou abrir a caixa.",
-            action: openBox
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   LETRAS DA MOEDA
-===================================================== */
-
-async function askInitials() {
-
-    await showTyping(1200);
-
-    addMessage(
-        "K.R."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Eu nunca descobri o que significavam."
-    );
-
-    advanceTime(1);
-
-    await sleep(800);
-
-    addClue(
-        "As iniciais K.R.",
-        "A moeda possui as letras K.R. gravadas."
-    );
-
-    playerNotes.textContent =
-        "A caixa azul contém:\n\n" +
-        "• Uma fotografia\n" +
-        "• Uma moeda antiga com as letras K.R.\n\n" +
-        "O desconhecido sabe que a caixa está comigo.";
-
-    showChoices([
-
-        {
-            text: "Vou procurar a caixa.",
-            action: openBox
-        },
-
-        {
-            text: "Você deveria saber o que K.R. significa.",
-            action: accuse
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   ABRIR CAIXA
-===================================================== */
-
-async function openBox() {
-
-    boxConfirmed = true;
-
-    await showTyping(1500);
-
-    addMessage(
-        "Você abriu?"
-    );
-
-    advanceTime(1);
-
-    await sleep(900);
-
-    addMessage(
-        "Então me diga o que encontrou primeiro."
-    );
-
-    advanceTime(1);
-
-    unlockPhoto();
-
-    await sleep(800);
-
-    showChoices([
-
-        {
-            text: "A fotografia.",
-            action: foundPhoto
-        },
-
-        {
-            text: "A moeda.",
-            action: foundCoin
-        },
-
-        {
-            text: "Não vou contar.",
-            action: hideContents
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   FOTOGRAFIA
-===================================================== */
-
-async function foundPhoto() {
-
-    trust++;
-
-    await showTyping(1400);
-
-    addMessage(
-        "Olhe o horário."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "22:18."
-    );
-
-    advanceTime(1);
-
-    discoveredDate = true;
-
-    addClue(
-        "22:18",
-        "A fotografia foi registrada às 22:18 do dia 14 de outubro."
-    );
-
-    await sleep(800);
-
-    showChoices([
-
-        {
-            text: "Por que esse horário é importante?",
-            action: askTime
-        },
-
-        {
-            text: "Quem aparece na fotografia?",
-            action: askPersonPhoto
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   MOEDA
-===================================================== */
-
-async function foundCoin() {
-
-    await showTyping(1300);
-
-    addMessage(
-        "As letras."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Você viu as letras?"
-    );
-
-    advanceTime(1);
-
-    showChoices([
-
-        {
-            text: "K.R.",
-            action: askInitialsAgain
-        },
-
-        {
-            text: "Não consigo entender.",
-            action: pretendConfusion
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   ESCONDER CONTEÚDO
-===================================================== */
-
-async function hideContents() {
-
-    suspicion++;
-
-    await showTyping(1300);
-
-    addMessage(
-        "Tudo bem."
-    );
-
-    advanceTime(1);
-
-    await sleep(800);
-
-    addMessage(
-        "Talvez seja melhor você descobrir sozinho."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addClue(
-        "O desconhecido recuou",
-        "Quando você escondeu o que encontrou, ele deixou de pressionar você."
-    );
-
-    showChoices([
-
-        {
-            text: "O que você está escondendo?",
-            action: askWhatHidden
-        },
-
-        {
-            text: "Vou continuar investigando.",
-            action: investigateAlone
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   HORÁRIO
-===================================================== */
-
-async function askTime() {
-
-    await showTyping(1400);
-
-    addMessage(
-        "Porque naquela noite alguém desapareceu."
-    );
-
-    advanceTime(1);
-
-    await sleep(900);
-
-    addMessage(
-        "Às 22:18."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "Desaparecimento às 22:18",
-        "O desconhecido relacionou o horário da fotografia ao desaparecimento de alguém."
-    );
-
-    await sleep(900);
-
-    showChoices([
-
-        {
-            text: "Quem desapareceu?",
-            action: askWhoDisappeared
-        },
-
-        {
-            text: "Você estava lá?",
-            action: askIfThere
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   PESSOA DA FOTO
-===================================================== */
-
-async function askPersonPhoto() {
-
-    await showTyping(1400);
-
-    addMessage(
-        "Eu não sei quem ela é."
-    );
-
-    advanceTime(1);
-
-    await sleep(800);
-
-    addMessage(
-        "Mas ela estava lá naquela noite."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "A pessoa desconhecida",
-        "A pessoa que aparece na fotografia estava presente na noite do desaparecimento."
-    );
-
-    await sleep(800);
-
-    showChoices([
-
-        {
-            text: "Você está mentindo.",
-            action: accuse
-        },
-
-        {
-            text: "Então por que me mandou procurar essa fotografia?",
-            action: askWhyPhoto
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   QUEM DESAPARECEU
-===================================================== */
-
-async function askWhoDisappeared() {
-
-    await showTyping(1500);
-
-    addMessage(
-        "Uma pessoa chamada Helena."
-    );
-
-    advanceTime(1);
-
-    await sleep(800);
-
-    addMessage(
-        "Mas isso aconteceu anos atrás."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "Helena",
-        "O desconhecido afirma que Helena desapareceu anos atrás, às 22:18."
-    );
-
-    await sleep(900);
-
-    showChoices([
-
-        {
-            text: "E o que isso tem a ver comigo?",
-            action: askConnection
-        },
-
-        {
-            text: "Você conhecia Helena?",
-            action: askHelena
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   ESTAVA LÁ
-===================================================== */
-
-async function askIfThere() {
-
-    suspicion++;
-
-    await showTyping(1300);
-
-    addMessage(
-        "Não."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Mas alguém que eu conheço estava."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "Alguém conhecido estava lá",
-        "O desconhecido afirma que outra pessoa estava presente naquela noite."
-    );
-
-    await sleep(800);
-
-    showChoices([
-
-        {
-            text: "Quem?",
-            action: askWhoWasThere
-        },
-
-        {
-            text: "Você está me contando metade da história.",
-            action: accuse
-
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   CONEXÃO
-===================================================== */
-
-async function askConnection() {
-
-    await showTyping(1500);
-
-    addMessage(
-        "É isso que eu estou tentando descobrir."
-    );
-
-    advanceTime(1);
-
-    await sleep(800);
-
-    addMessage(
-        "Talvez você tenha recebido a caixa justamente por causa disso."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "A caixa pode ter sido enviada por um motivo",
-        "O desconhecido acredita que a caixa pode estar relacionada a você."
-    );
-
-    await sleep(800);
-
-    showChoices([
-
-        {
-            text: "Então a caixa foi enviada para mim?",
-            action: askBoxOrigin
-        },
-
-        {
-            text: "Quem colocou a caixa lá?",
-            action: askWhoPlaced
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   HELENA
-===================================================== */
-
-async function askHelena() {
-
-    await showTyping(1400);
-
-    addMessage(
-        "Não pessoalmente."
-    );
-
-    advanceTime(1);
-
-    await sleep(800);
-
-    addMessage(
-        "Mas eu conheço alguém que conhecia Helena."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "Ligação com Helena",
-        "O desconhecido não conheceu Helena pessoalmente, mas conhece alguém que a conhecia."
-    );
-
-    showChoices([
-
-        {
-            text: "Quem é essa pessoa?",
-            action: askWhoKnowsHelena
-        },
-
-        {
-            text: "Isso está ficando cada vez mais estranho.",
-            action: continueInvestigation
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   QUEM ESTAVA LÁ
-===================================================== */
-
-async function askWhoWasThere() {
-
-    await showTyping(1500);
-
-    addMessage(
-        "Eu não posso dizer ainda."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Mas você provavelmente conhece essa pessoa."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "Você pode conhecer a testemunha",
-        "A pessoa que estava no local pode fazer parte da sua própria vida."
-    );
-
-    await sleep(800);
-
-    showChoices([
-
-        {
-            text: "Me dê pelo menos uma pista.",
-            action: giveHint
-        },
-
-        {
-            text: "Então vou descobrir sozinho.",
-            action: investigateAlone
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   ACUSAÇÃO
-===================================================== */
-
-async function accuse() {
-
-    suspicion++;
-
-    await showTyping(1300);
-
-    addMessage(
-        "Talvez eu esteja."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Mas você também não está me contando tudo."
-    );
-
-    advanceTime(1);
-
-    await sleep(800);
-
-    addMessage(
-        "Estamos empatados."
-    );
-
-    await sleep(800);
-
-    showChoices([
-
-        {
-            text: "Então vamos parar de esconder as coisas.",
-            action: honestConversation
-        },
-
-        {
-            text: "Eu ainda não confio em você.",
-            action: cautiousConversation
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   HONESTIDADE
-===================================================== */
-
-async function honestConversation() {
-
-    trust++;
-
-    await showTyping(1400);
-
-    addMessage(
-        "Tudo bem."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Eu também estou com medo."
-    );
-
-    advanceTime(1);
-
-    await sleep(800);
-
-    addMessage(
-        "A pessoa que me pediu para encontrar a caixa desapareceu ontem."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "Outra pessoa desapareceu",
-        "O desconhecido afirma que alguém que o ajudava desapareceu recentemente."
-    );
-
-    await sleep(900);
-
-    showChoices([
-
-        {
-            text: "Você acha que ela está em perigo?",
-            action: askDanger
-        },
-
-        {
-            text: "E você quer que eu encontre essa pessoa?",
-            action: askMission
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   CONVERSA CAUTELOSA
-===================================================== */
-
-async function cautiousConversation() {
-
-    suspicion++;
-
-    await showTyping(1200);
-
-    addMessage(
-        "Eu esperava que você dissesse isso."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Por isso não vou pedir que confie em mim."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Só continue procurando."
-    );
-
-    addClue(
-        "Continue procurando",
-        "O desconhecido não pede confiança. Apenas insiste que você continue investigando."
-    );
-
-    showChoices([
-
-        {
-            text: "O que devo procurar?",
-            action: askSearch
-        },
-
-        {
-            text: "Onde você está?",
-            action: askLocation
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   PISTA
-===================================================== */
-
-async function giveHint() {
-
-    await showTyping(1200);
-
-    addMessage(
-        "Procure por algo escrito atrás da fotografia."
-    );
-
-    advanceTime(1);
-
-    await sleep(800);
-
-    addClue(
-        "Verso da fotografia",
-        "O desconhecido afirma que existe algo escrito atrás da fotografia."
-    );
-
-    showChoices([
-
-        {
-            text: "Vou verificar.",
-            action: inspectBackPhoto
-        },
-
-        {
-            text: "O que está escrito?",
-            action: askWrittenMessage
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   VERSO DA FOTO
-===================================================== */
-
-async function inspectBackPhoto() {
-
-    await showTyping(1300);
-
-    addMessage(
-        "Você encontrou alguma coisa?"
-    );
-
-    advanceTime(1);
-
-    await sleep(800);
-
-    addMessage(
-        "Tem uma frase escrita à mão."
-    );
-
-    advanceTime(1);
-
-    discoveredInitials = true;
-
-    addClue(
-        "Mensagem no verso",
-        "Existe uma frase escrita à mão no verso da fotografia."
-    );
-
-    await sleep(800);
-
-    showChoices([
-
-        {
-            text: "O que está escrito?",
-            action: askWrittenMessage
-        },
-
-        {
-            text: "Vou guardar isso por enquanto.",
-            action: keepMessage
-
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   FRASE
-===================================================== */
-
-async function askWrittenMessage() {
-
-    await showTyping(1300);
-
-    addMessage(
-        "Está escrito: 'Não olhe para trás.'"
-    );
-
-    advanceTime(1);
-
-    await sleep(900);
-
-    addClue(
-        "Não olhe para trás",
-        "A frase escrita no verso da fotografia diz: 'Não olhe para trás.'"
-    );
-
-    playerNotes.textContent =
-        "A caixa azul contém uma fotografia e uma moeda.\n\n" +
-        "A fotografia foi tirada às 22:18.\n\n" +
-        "Helena desapareceu naquela noite.\n\n" +
-        "No verso da fotografia está escrito:\n" +
-        "\"Não olhe para trás.\"\n\n" +
-        "Preciso descobrir quem está por trás disso.";
-
-    showChoices([
-
-        {
-            text: "Quem escreveu isso?",
-            action: askWriter
-        },
-
-        {
-            text: "Isso está ficando perigoso.",
-            action: askDanger
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
-   CONTINUAÇÕES
-===================================================== */
-
-async function askAboutPerson() {
-
-    await showTyping(1200);
-
-    addMessage(
-        "Não é alguém tão próximo quanto você imagina."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Mas essa pessoa já esteve na sua casa."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "A pessoa esteve na sua casa",
-        "A pessoa que passou seu número ao desconhecido já esteve na sua casa."
-    );
-
-    showChoices([
-
-        {
-            text: "Quem esteve aqui?",
-            action: askWhoWasThere
-        },
-
-        {
-            text: "Vou descobrir sozinho.",
-            action: investigateAlone
-        }
-
-    ]);
-
-}
-
-
-async function askHowKnows() {
-
-    await showTyping(1300);
-
-    addMessage(
-        "Porque eu já estive aí."
-    );
-
-    advanceTime(1);
-
-    await sleep(800);
-
-    addMessage(
-        "Mas faz muito tempo."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "Ele já esteve aqui",
-        "O desconhecido afirma que já esteve no local onde você mora."
-    );
-
-    showChoices([
-
-        {
-            text: "Quando?",
-            action: askWhen
-        },
-
-        {
-            text: "Por que você esteve aqui?",
-            action: askWhyHere
-        }
-
-    ]);
-
-}
-
-
-async function askWhen() {
-
-    await showTyping(1200);
-
-    addMessage(
-        "Antes de você perceber que a caixa existia."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Isso é tudo que posso dizer agora."
-    );
-
-    addClue(
-        "Ele esteve aqui antes da caixa",
-        "O desconhecido afirma ter estado no local antes de você descobrir a caixa."
-    );
-
-    continueMainStory();
-
-}
-
-
-async function askWhyHere() {
-
-    await showTyping(1300);
-
-    addMessage(
-        "Eu estava procurando a mesma coisa que você está procurando agora."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "Ele procurava a mesma coisa",
-        "O desconhecido já investigava o mesmo mistério antes de entrar em contato com você."
-    );
-
-    continueMainStory();
-
-}
-
-
-async function askWhoPlaced() {
-
-    await showTyping(1200);
-
-    addMessage(
-        "Não sei."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Mas existe uma maneira de descobrir."
-    );
-
-    advanceTime(1);
-
-    continueMainStory();
-
-}
-
-
-async function askBoxOrigin() {
-
-    await showTyping(1300);
-
-    addMessage(
-        "Eu não tenho certeza."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "E é justamente isso que me preocupa."
-    );
-
-    advanceTime(1);
-
-    continueMainStory();
-
-}
-
-
-async function askWhoKnowsHelena() {
-
-    await showTyping(1300);
-
-    addMessage(
-        "A pessoa que tirou a fotografia."
-    );
-
-    advanceTime(1);
-
-    await sleep(800);
-
-    addClue(
-        "O fotógrafo",
-        "A pessoa que tirou a fotografia aparentemente conhecia Helena."
-    );
-
-    continueMainStory();
-
-}
-
-
-async function askWhyPhoto() {
-
-    await showTyping(1300);
-
-    addMessage(
-        "Porque ela pode mostrar quem estava observando Helena."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "A fotografia mostra uma testemunha",
-        "A pessoa ao fundo pode ter presenciado o desaparecimento."
-    );
-
-    continueMainStory();
-
-}
-
-
-async function askDanger() {
-
-    await showTyping(1300);
-
-    addMessage(
-        "Eu não sei."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Mas ninguém desaparece por acaso."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "O desaparecimento pode não ter sido acidental",
-        "O desconhecido acredita que o desaparecimento de Helena e o desaparecimento recente podem estar relacionados."
-    );
-
-    continueMainStory();
-
-}
-
-
-async function askMission() {
-
-    trust++;
-
-    await showTyping(1300);
-
-    addMessage(
-        "Não exatamente."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Primeiro preciso saber em quem posso confiar."
-    );
-
-    advanceTime(1);
-
-    continueMainStory();
-
-}
-
-
-async function askSearch() {
-
-    await showTyping(1200);
-
-    addMessage(
-        "Procure pela data."
-    );
-
-    advanceTime(1);
-
-    addMessage(
-        "14 de outubro."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "14 de outubro",
-        "A data aparece relacionada à fotografia e ao desaparecimento de Helena."
-    );
-
-    continueMainStory();
-
-}
-
-
-async function askLocation() {
-
-    await showTyping(1200);
-
-    addMessage(
-        "Não posso dizer."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Mas estou perto."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "Ele está perto",
-        "O desconhecido afirma estar próximo de você."
-    );
-
-    continueMainStory();
-
-}
-
-
-async function askWriter() {
-
-    await showTyping(1300);
-
-    addMessage(
-        "Essa é a parte que eu ainda não consegui descobrir."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Mas acho que a moeda pode ajudar."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "A moeda pode revelar algo",
-        "As letras K.R. podem estar relacionadas à mensagem da fotografia."
-    );
-
-    continueMainStory();
-
-}
-
-
-async function keepMessage() {
-
-    await showTyping(1000);
-
-    addMessage(
-        "Tudo bem."
-    );
-
-    advanceTime(1);
-
-    addMessage(
-        "Só não esqueça o que você viu."
-    );
-
-    advanceTime(1);
-
-    continueMainStory();
-
-}
-
-
-async function pretendConfusion() {
-
-    suspicion++;
-
-    await showTyping(1200);
-
-    addMessage(
-        "Você sabe exatamente do que estou falando."
-    );
-
-    advanceTime(1);
-
-    addMessage(
-        "Mas tudo bem."
-    );
-
-    advanceTime(1);
-
-    continueMainStory();
-
-}
-
-
-async function askWhatHidden() {
-
-    await showTyping(1200);
-
-    addMessage(
-        "Uma parte da história."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "Uma parte da história está escondida",
-        "O desconhecido admite que ainda não contou tudo."
-    );
-
-    continueMainStory();
-
-}
-
-
-async function investigateAlone() {
-
-    trust = Math.max(0, trust - 1);
-
-    await showTyping(1200);
-
-    addMessage(
-        "Talvez seja melhor assim."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Mas tenha cuidado."
-    );
-
-    advanceTime(1);
-
-    continueMainStory();
-
-}
-
-
-/* =====================================================
-   CONTINUAÇÃO PRINCIPAL
-===================================================== */
-
-async function continueMainStory() {
-
-    storyProgress++;
-
-    if (storyProgress < 2) {
-
-        await sleep(700);
-
-        showChoices([
-
-            {
-                text: "O que aconteceu naquela noite?",
-                action: askNight
-            },
-
-            {
-                text: "Quem é você de verdade?",
-                action: deeperIdentity
-            }
-
-        ]);
-
-        return;
-    }
-
-    if (storyProgress < 4) {
-
-        await sleep(700);
-
-        showChoices([
-
-            {
-                text: "Posso confiar em você?",
-                action: trustQuestion
-            },
-
-            {
-                text: "Vou investigar a fotografia.",
-                action: inspectPhotoAgain
-            }
-
-        ]);
-
-        return;
-    }
-
-    await finalChapterSequence();
-
-}
-
-
-/* =====================================================
-   NOITE
-===================================================== */
-
-async function askNight() {
-
-    await showTyping(1300);
-
-    addMessage(
-        "Choveu naquela noite."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Helena saiu de casa às 21:47."
-    );
-
-    advanceTime(1);
-
-    await sleep(800);
-
-    addMessage(
-        "Às 22:18, ninguém conseguiu mais falar com ela."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "21:47",
-        "Helena saiu de casa às 21:47, segundo o desconhecido."
-    );
-
-    addClue(
-        "22:18",
-        "Às 22:18, ninguém conseguiu mais falar com Helena."
-    );
-
-    storyProgress++;
-
-    continueMainStory();
-
-}
-
-
-/* =====================================================
-   IDENTIDADE
-===================================================== */
-
-async function deeperIdentity() {
-
-    await showTyping(1400);
-
-    addMessage(
-        "Meu nome é Daniel."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Agora você sabe mais sobre mim do que deveria."
-    );
-
-    advanceTime(1);
-
-    askedName = true;
-
-    addClue(
-        "Daniel",
-        "O desconhecido finalmente revelou seu nome: Daniel."
-    );
-
-    storyProgress++;
-
-    continueMainStory();
-
-}
-
-
-/* =====================================================
-   CONFIANÇA
-===================================================== */
-
-async function trustQuestion() {
-
-    if (trust > suspicion) {
-
-        trust++;
-
-        await showTyping(1300);
-
-        addMessage(
-            "Acho que sim."
+.locked-photo {
+    height: 250px;
+
+    border: 1px solid #343b41;
+
+    border-radius: 12px;
+
+    background:
+        repeating-linear-gradient(
+            45deg,
+            #171d22,
+            #171d22 10px,
+            #14191e 10px,
+            #14191e 20px
         );
 
-        advanceTime(1);
+    display: flex;
 
-        await sleep(700);
+    flex-direction: column;
 
-        addMessage(
-            "Mas não confie completamente em mim."
+    justify-content: center;
+
+    align-items: center;
+
+    color: #89918f;
+}
+
+.locked-photo div {
+    font-size: 35px;
+
+    margin-bottom: 10px;
+}
+
+.locked-photo small {
+    margin-top: 7px;
+
+    color: #5f686d;
+}
+
+.fake-photo {
+    height: 270px;
+
+    background: #15191b;
+
+    border: 1px solid #3a4245;
+
+    border-radius: 10px;
+
+    overflow: hidden;
+
+    position: relative;
+}
+
+.photo-night {
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        radial-gradient(
+            circle at 75% 25%,
+            #646b68 0 2%,
+            transparent 3%
+        ),
+        linear-gradient(
+            150deg,
+            #343a39,
+            #111516 65%
         );
+}
 
-    } else {
+.photo-person {
+    position: absolute;
 
-        suspicion++;
+    width: 70px;
+    height: 110px;
 
-        await showTyping(1300);
+    left: 62%;
 
-        addMessage(
-            "Você não deveria."
-        );
+    top: 65px;
 
-        advanceTime(1);
+    background: #161a1b;
 
-        await sleep(700);
+    border-radius: 45% 45% 20% 20%;
 
-        addMessage(
-            "Pelo menos ainda não."
-        );
+    display: flex;
 
-    }
+    align-items: center;
 
-    advanceTime(1);
+    justify-content: center;
 
-    storyProgress++;
+    color: #59615e;
 
-    continueMainStory();
+    font-size: 30px;
+}
 
+.photo-caption {
+    position: absolute;
+
+    bottom: 0;
+
+    left: 0;
+    right: 0;
+
+    padding: 9px;
+
+    background: rgba(0,0,0,.6);
+
+    font-size: 9px;
+
+    color: #c3c8c6;
+}
+
+.photo-unlocked p {
+    color: #89918e;
+
+    font-size: 12px;
+
+    line-height: 1.6;
+
+    margin-top: 12px;
 }
 
 
-/* =====================================================
-   FOTO NOVAMENTE
-===================================================== */
+/* =========================
+   TELEFONE
+========================= */
 
-async function inspectPhotoAgain() {
+.call-list {
+    padding: 10px;
+}
 
-    photoInspected = true;
+.call-item {
+    padding: 15px 10px;
 
-    await showTyping(1300);
+    border-bottom: 1px solid #252c32;
 
-    addMessage(
-        "Olhe para o canto esquerdo."
-    );
+    display: flex;
 
-    advanceTime(1);
+    align-items: center;
 
-    await sleep(700);
+    gap: 12px;
+}
 
-    addMessage(
-        "Agora veja a janela atrás da pessoa."
-    );
+.call-icon {
+    width: 38px;
+    height: 38px;
 
-    advanceTime(1);
+    border-radius: 50%;
 
-    addClue(
-        "A janela",
-        "Existe uma janela ao fundo da fotografia que pode indicar o local onde ela foi tirada."
-    );
+    background: #26382c;
 
-    storyProgress++;
+    display: flex;
 
-    continueMainStory();
+    align-items: center;
+    justify-content: center;
+}
 
+.call-icon.missed {
+    background: #493132;
+}
+
+.call-item div:nth-child(2) {
+    flex: 1;
+}
+
+.call-item strong,
+.call-item small {
+    display: block;
+}
+
+.call-item strong {
+    font-size: 12px;
+}
+
+.call-item small {
+    color: #7e878b;
+
+    font-size: 10px;
+
+    margin-top: 4px;
+}
+
+.call-item > span {
+    color: #737b80;
+
+    font-size: 9px;
+}
+
+.call-button {
+    display: block;
+
+    margin: 35px auto;
+
+    padding: 13px 20px;
+
+    background: #2e4736;
+
+    color: white;
+
+    border: 1px solid #516a59;
+
+    border-radius: 7px;
+
+    cursor: pointer;
 }
 
 
-/* =====================================================
-   FINAL DO CAPÍTULO
-===================================================== */
+/* =========================
+   PISTAS
+========================= */
 
-async function finalChapterSequence() {
+.clues-list {
+    padding: 15px;
+}
 
-    await sleep(1000);
+.clue {
+    padding: 15px;
 
-    await showTyping(1500);
+    margin-bottom: 10px;
 
-    addMessage(
-        "Você encontrou tudo."
-    );
+    border: 1px solid #30383d;
 
-    advanceTime(1);
+    background: #171d22;
 
-    await sleep(900);
+    border-radius: 9px;
 
-    addMessage(
-        "A fotografia."
-    );
+    animation: messageIn .3s ease;
+}
 
-    advanceTime(1);
+.clue strong {
+    display: block;
 
-    await sleep(600);
+    font-size: 12px;
 
-    addMessage(
-        "A moeda."
-    );
+    margin-bottom: 6px;
+}
 
-    advanceTime(1);
+.clue p {
+    color: #8b9492;
 
-    await sleep(600);
+    font-size: 11px;
 
-    addMessage(
-        "As iniciais."
-    );
+    line-height: 1.5;
+}
 
-    advanceTime(1);
+.empty-clues {
+    text-align: center;
 
-    await sleep(900);
+    color: #5f696e;
 
-    addMessage(
-        "Agora falta apenas uma coisa."
-    );
+    margin-top: 50px;
 
-    advanceTime(1);
-
-    await sleep(1000);
-
-    addMessage(
-        "Descobrir por que a caixa foi deixada para você."
-    );
-
-    advanceTime(1);
-
-    await sleep(1200);
-
-    notify(
-        "Número Desconhecido",
-        "Nova chamada recebida."
-    );
-
-    await showTyping(1500);
-
-    addMessage(
-        "Não atenda."
-    );
-
-    advanceTime(1);
-
-    await sleep(900);
-
-    showChoices([
-
-        {
-            text: "Vou atender.",
-            action: answerCall
-        },
-
-        {
-            text: "Não vou atender.",
-            action: ignoreCall
-        },
-
-        {
-            text: "Antes disso, quem está ligando?",
-            action: askCaller
-
-        }
-
-    ]);
-
+    font-size: 12px;
 }
 
 
-/* =====================================================
-   ATENDER
-===================================================== */
+/* =========================
+   NOTAS
+========================= */
 
-async function answerCall() {
+.notes-content {
+    padding: 25px;
+}
 
-    callMade = true;
+.notes-content h3 {
+    font-size: 12px;
 
-    await showTyping(1300);
+    letter-spacing: 2px;
 
-    addMessage(
-        "A chamada fica em silêncio."
-    );
+    margin-bottom: 20px;
+}
 
-    advanceTime(1);
+.notes-content p {
+    color: #9aa29f;
 
-    await sleep(1200);
+    line-height: 1.8;
 
-    addMessage(
-        "Então você ouve três batidas."
-    );
+    font-size: 13px;
 
-    advanceTime(1);
-
-    await sleep(1000);
-
-    addMessage(
-        "toc... toc... toc..."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "Três batidas",
-        "Durante a chamada, você ouviu três batidas antes da ligação ser encerrada."
-    );
-
-    await sleep(1000);
-
-    determineEnding();
-
+    white-space: pre-line;
 }
 
 
-/* =====================================================
-   IGNORAR
-===================================================== */
-
-async function ignoreCall() {
-
-    trust++;
-
-    await showTyping(1200);
-
-    addMessage(
-        "Obrigado."
-    );
-
-    advanceTime(1);
-
-    await sleep(700);
-
-    addMessage(
-        "Você fez a escolha certa."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "A ligação não deveria ser atendida",
-        "O desconhecido parecia saber que atender a ligação poderia ser perigoso."
-    );
-
-    await sleep(900);
-
-    determineEnding();
-
-}
-
-
-/* =====================================================
-   PERGUNTAR QUEM LIGA
-===================================================== */
-
-async function askCaller() {
-
-    await showTyping(1300);
-
-    addMessage(
-        "Eu."
-    );
-
-    advanceTime(1);
-
-    await sleep(900);
-
-    addMessage(
-        "Mas não fui eu que iniciei a chamada."
-    );
-
-    advanceTime(1);
-
-    addClue(
-        "Daniel não fez a ligação",
-        "Daniel afirma que a chamada apareceu sem que ele a tivesse iniciado."
-    );
-
-    await sleep(800);
-
-    showChoices([
-
-        {
-            text: "Vou atender.",
-            action: answerCall
-        },
-
-        {
-            text: "Não vou atender.",
-            action: ignoreCall
-        }
-
-    ]);
-
-}
-
-
-/* =====================================================
+/* =========================
    FINAL
-===================================================== */
+========================= */
 
-function determineEnding() {
+.end-screen {
+    background:
+        radial-gradient(circle, #17201b, #050707 65%);
+}
 
-    gameScreen.classList.add("hidden");
+.end-content {
+    width: 90%;
 
-    endScreen.classList.remove("hidden");
+    max-width: 450px;
 
-    if (
-        trust >= 5 &&
-        clues.length >= 7 &&
-        photoInspected
-    ) {
+    text-align: center;
+}
 
-        endTitle.textContent = "A CAIXA AZUL";
+.end-icon {
+    width: 80px;
+    height: 80px;
 
-        endText.textContent =
-            "Você ainda não descobriu toda a verdade. " +
-            "Mas agora sabe que a caixa, a fotografia, Helena e o desconhecido estão ligados. " +
-            "E alguém parece saber que você encontrou as pistas.";
+    border: 1px solid #637168;
 
-    }
+    border-radius: 50%;
 
-    else if (
-        suspicion >= trust + 3
-    ) {
+    margin: auto;
 
-        endTitle.textContent = "NÃO CONFIE EM NINGUÉM";
+    display: flex;
 
-        endText.textContent =
-            "Você percebeu que existem informações sendo escondidas. " +
-            "Daniel pode estar dizendo a verdade... ou pode estar conduzindo você exatamente para onde quer.";
+    align-items: center;
+    justify-content: center;
 
-    }
+    font-size: 35px;
+}
 
-    else if (
-        clues.length >= 5
-    ) {
+.end-content h1 {
+    margin-top: 30px;
 
-        endTitle.textContent = "A PRIMEIRA PISTA";
+    letter-spacing: 5px;
+}
 
-        endText.textContent =
-            "Você juntou pistas suficientes para perceber que o desaparecimento de Helena não foi um acontecimento isolado. " +
-            "A história está apenas começando.";
+.end-content p {
+    color: #8d9692;
 
-    }
+    margin-top: 15px;
 
-    else {
-
-        endTitle.textContent = "CONTINUA...";
-
-        endText.textContent =
-            "Você ainda não possui respostas suficientes. " +
-            "Mas uma coisa está clara: alguém queria que você encontrasse aquela caixa.";
-
-    }
-
-    gameStarted = false;
-
+    line-height: 1.7;
 }
 
 
-/* =====================================================
-   REINICIAR
-===================================================== */
+/* =========================
+   ANIMAÇÕES
+========================= */
 
-function restartGame() {
+@keyframes appear {
 
-    endScreen.classList.add("hidden");
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
 
-    startScreen.classList.remove("hidden");
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
-    gameStarted = false;
+@keyframes messageIn {
 
-    currentHour = 23;
-    currentMinute = 41;
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
 
-    trust = 0;
-    suspicion = 0;
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
-    clues = [];
+@keyframes notification {
 
-    boxConfirmed = false;
-    photoUnlockedState = false;
-    photoInspected = false;
-    callMade = false;
-    askedName = false;
-    discoveredDate = false;
-    discoveredInitials = false;
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
 
-    storyProgress = 0;
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
-    messageBadge.classList.remove("hidden");
+@keyframes typing {
 
-    clueBadge.textContent = "0";
+    0%,100% {
+        opacity: .3;
+        transform: translateY(0);
+    }
 
-    clueBadge.classList.add("hidden");
-
-    notificationArea.innerHTML = "";
-
-    playerNotes.textContent =
-        "Ainda não escrevi nada...";
-
-    updateClock();
-
-    renderClues();
-
+    50% {
+        opacity: 1;
+        transform: translateY(-3px);
+    }
 }
 
 
-/* =====================================================
-   EVENTOS
-===================================================== */
+/* =========================
+   CELULAR
+========================= */
 
-startButton.addEventListener(
-    "click",
-    startGame
-);
+@media (max-width: 500px) {
 
+    .phone {
+        width: 100vw;
+        height: 100vh;
 
-restartButton.addEventListener(
-    "click",
-    restartGame
-);
+        border-radius: 0;
+    }
 
+    .start-content h1 {
+        letter-spacing: 5px;
+    }
+}
 
-/* =====================================================
-   INICIALIZAÇÃO
-===================================================== */
+/* ==========================================================
+   NOVA TELA INICIAL — NÚMERO DESCONHECIDO
+   Visual cinematográfico de investigação / thriller urbano
+   ========================================================== */
+.start-screen {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: #05080a;
+    color: #f3f5f4;
+}
 
-updateClock();
+.menu-scene,
+.menu-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.menu-scene {
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 76% 22%, rgba(35, 112, 119, .20), transparent 28%),
+        radial-gradient(circle at 24% 45%, rgba(17, 73, 79, .18), transparent 30%),
+        linear-gradient(125deg, #081014 0%, #071116 42%, #020507 100%);
+}
+
+/* janela urbana ao fundo */
+.window-glow {
+    position: absolute;
+    width: 52vw;
+    min-width: 520px;
+    height: 70vh;
+    right: -4vw;
+    top: -5vh;
+    background:
+        linear-gradient(90deg, transparent 48%, rgba(135, 218, 223, .12) 49%, transparent 50%),
+        linear-gradient(0deg, transparent 47%, rgba(135, 218, 223, .10) 48%, transparent 49%),
+        radial-gradient(circle at 55% 58%, rgba(63, 205, 211, .28), transparent 4%),
+        radial-gradient(circle at 23% 72%, rgba(28, 143, 157, .25), transparent 5%),
+        linear-gradient(180deg, rgba(12, 39, 48, .75), rgba(2, 8, 11, .94));
+    border: 1px solid rgba(109, 194, 199, .16);
+    box-shadow: inset 0 0 80px rgba(0,0,0,.75), 0 0 50px rgba(38, 151, 160, .08);
+    transform: perspective(900px) rotateY(-3deg);
+}
+
+.window-frame::before,
+.window-frame::after {
+    content: "";
+    position: absolute;
+    background: rgba(100, 168, 173, .12);
+    z-index: 2;
+}
+.window-frame::before { width: 2px; height: 75vh; right: 25vw; top: 0; }
+.window-frame::after { height: 2px; width: 54vw; right: 0; top: 43vh; }
+
+/* chuva */
+.rain {
+    position: absolute;
+    inset: -20%;
+    opacity: .25;
+    background-image: repeating-linear-gradient(108deg, transparent 0 15px, rgba(166,225,229,.18) 16px, transparent 17px 34px);
+    transform: rotate(2deg);
+    animation: rainMove 9s linear infinite;
+}
+.rain-b { opacity: .10; transform: rotate(2deg) scale(1.15); animation-duration: 14s; }
+
+/* mesa */
+.desk {
+    position: absolute;
+    left: -4%;
+    right: -4%;
+    bottom: -4vh;
+    height: 34vh;
+    background:
+        linear-gradient(175deg, rgba(45,55,56,.9), rgba(12,17,19,.98) 45%, #050708 100%);
+    border-top: 1px solid rgba(123,160,157,.25);
+    box-shadow: 0 -25px 70px rgba(0,0,0,.55);
+    transform: perspective(800px) rotateX(5deg);
+}
+.desk-edge {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 28vh;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(100,202,207,.25), transparent);
+}
+
+/* luminária */
+.desk-lamp {
+    position: absolute;
+    left: 10%;
+    top: 7%;
+    width: 210px;
+    height: 230px;
+    transform: rotate(-13deg);
+    filter: drop-shadow(0 0 22px rgba(255, 188, 101, .18));
+}
+.desk-lamp::before {
+    content: "";
+    position: absolute;
+    width: 9px;
+    height: 155px;
+    left: 85px;
+    top: 45px;
+    background: linear-gradient(#2d3637, #0c1011);
+    border-radius: 8px;
+    transform: rotate(26deg);
+    transform-origin: top;
+}
+.desk-lamp::after {
+    content: "";
+    position: absolute;
+    width: 125px;
+    height: 62px;
+    left: 38px;
+    top: 12px;
+    background: linear-gradient(180deg, #394447, #12191b);
+    border-radius: 80% 80% 28% 28%;
+    transform: rotate(-9deg);
+    box-shadow: inset 0 -8px 12px rgba(0,0,0,.5), 0 7px 18px rgba(0,0,0,.4);
+}
+.desk-lamp span {
+    position: absolute;
+    width: 60px;
+    height: 25px;
+    left: 70px;
+    top: 63px;
+    border-radius: 50%;
+    background: #f2c97c;
+    box-shadow: 0 0 45px 18px rgba(255, 188, 94, .18);
+}
+
+/* objetos da mesa */
+.paper {
+    position: absolute;
+    width: 220px;
+    height: 120px;
+    bottom: 10vh;
+    background: linear-gradient(135deg, #b9b09a, #6c675b);
+    box-shadow: 0 12px 24px rgba(0,0,0,.42);
+    opacity: .72;
+}
+.paper::after {
+    content: "////  22:18\A  HELENA\A  K.R.\A  NÃO OLHE PARA TRÁS";
+    white-space: pre;
+    position: absolute;
+    inset: 14px;
+    color: rgba(30,30,28,.65);
+    font: 9px/1.65 monospace;
+}
+.paper-1 { left: 39%; transform: rotate(-5deg); }
+.paper-2 { left: 48%; bottom: 13vh; transform: rotate(7deg); width: 190px; opacity: .45; }
+.paper-3 { right: 11%; bottom: 7vh; transform: rotate(-9deg); width: 170px; opacity: .38; }
+
+.case-file {
+    position: absolute;
+    right: 19%;
+    bottom: 12vh;
+    width: 92px;
+    height: 116px;
+    padding: 13px;
+    border: 1px solid rgba(197,165,101,.55);
+    background: linear-gradient(145deg, #20272a, #0b1012);
+    color: #c9b681;
+    font: 10px/1.4 monospace;
+    letter-spacing: 2px;
+    transform: rotate(7deg);
+    box-shadow: 0 15px 25px rgba(0,0,0,.4);
+}
+.case-file b { font-size: 34px; }
+
+.desk-phone {
+    position: absolute;
+    left: 28%;
+    bottom: 9vh;
+    width: 110px;
+    height: 65px;
+    border-radius: 18px 18px 10px 10px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(145deg, #22282a, #090c0d);
+    border: 1px solid #4b5250;
+    color: #8b9896;
+    font-size: 34px;
+    transform: rotate(-6deg);
+    box-shadow: 0 15px 24px rgba(0,0,0,.55);
+}
+
+.magnifier {
+    position: absolute;
+    right: 8%;
+    bottom: 18vh;
+    font-size: 72px;
+    color: rgba(116, 192, 196, .30);
+    transform: rotate(-24deg);
+}
+
+.menu-overlay {
+    z-index: 3;
+    background:
+        linear-gradient(90deg, rgba(2,5,7,.98) 0%, rgba(2,6,8,.82) 30%, rgba(2,5,7,.28) 60%, rgba(2,5,7,.68) 100%),
+        linear-gradient(0deg, rgba(0,0,0,.82), transparent 35%, rgba(0,0,0,.24));
+}
+
+.start-content {
+    position: relative;
+    z-index: 5;
+    width: min(760px, 92vw);
+    text-align: center;
+    animation: menuAppear .9s ease both;
+    text-shadow: 0 3px 18px rgba(0,0,0,.8);
+}
+
+.eyebrow,
+.menu-subtitle {
+    font-family: Georgia, 'Times New Roman', serif;
+    letter-spacing: 4px;
+    color: #b9c7c6;
+}
+.eyebrow { font-size: clamp(11px, 1.5vw, 16px); }
+.menu-subtitle { margin-top: 8px; font-size: clamp(12px, 1.7vw, 18px); }
+
+.title-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin: 25px auto 8px;
+}
+.mark-line {
+    width: 90px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(94,225,231,.65));
+}
+.mark-line:last-child { background: linear-gradient(90deg, rgba(240,177,100,.65), transparent); }
+
+.mystery-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0;
+    border: 1px solid rgba(91,224,230,.7);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font: 24px Georgia, serif;
+    color: #9df0f1;
+    background: rgba(7,24,28,.72);
+    box-shadow: 0 0 28px rgba(50,204,211,.18), inset 0 0 16px rgba(50,204,211,.08);
+}
+
+.start-content h1 {
+    margin-top: 8px;
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    font-size: clamp(58px, 9vw, 118px);
+    line-height: .82;
+    letter-spacing: 2px;
+    font-weight: 900;
+    color: #e9eeee;
+    -webkit-text-stroke: 1px rgba(91,224,230,.65);
+    text-shadow: 0 0 16px rgba(80,211,218,.12), 5px 7px 0 rgba(0,0,0,.42);
+}
+.start-content h1 span {
+    color: #dfe8e8;
+    -webkit-text-stroke-color: rgba(232,168,99,.72);
+}
+
+.tagline {
+    margin-top: 22px !important;
+    color: #aab8b8 !important;
+    font: 11px/1.7 Arial, sans-serif !important;
+    letter-spacing: 2px;
+}
+
+.menu-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+    gap: 12px;
+    width: min(720px, 92vw);
+    margin: 30px auto 0;
+}
+.menu-button {
+    min-height: 54px;
+    padding: 10px 13px;
+    border: 1px solid rgba(75, 206, 214, .55);
+    background: linear-gradient(180deg, rgba(8,31,35,.82), rgba(5,14,17,.92));
+    color: #d9e5e4;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    font-size: 12px;
+    letter-spacing: 1px;
+    transition: .25s ease;
+    box-shadow: inset 0 0 18px rgba(49,191,198,.06), 0 8px 20px rgba(0,0,0,.28);
+}
+.menu-button:nth-child(2),
+.menu-button:nth-child(4) { border-color: rgba(226,165,97,.62); }
+.menu-button:hover {
+    transform: translateY(-3px);
+    background: linear-gradient(180deg, rgba(17,59,63,.9), rgba(6,17,20,.96));
+    box-shadow: 0 0 22px rgba(61,210,218,.15), 0 10px 25px rgba(0,0,0,.4);
+}
+.menu-button:nth-child(2):hover,
+.menu-button:nth-child(4):hover { box-shadow: 0 0 22px rgba(225,163,93,.13), 0 10px 25px rgba(0,0,0,.4); }
+.button-icon { font-size: 18px; color: #83e9ec; }
+.menu-button:nth-child(2) .button-icon,
+.menu-button:nth-child(4) .button-icon { color: #edb26d; }
+
+.menu-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    color: rgba(172,188,187,.58);
+    font: 9px monospace;
+    letter-spacing: 2px;
+}
+
+@keyframes menuAppear {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes rainMove {
+    from { transform: translate3d(0,-25px,0) rotate(2deg); }
+    to { transform: translate3d(-35px,55px,0) rotate(2deg); }
+}
+
+@media (max-width: 720px) {
+    .window-glow { width: 90vw; min-width: 0; right: -25vw; opacity: .7; }
+    .desk-lamp { transform: scale(.72) rotate(-13deg); transform-origin: top left; left: 2%; }
+    .paper-1 { left: 25%; width: 160px; }
+    .case-file { right: 6%; }
+    .menu-buttons { grid-template-columns: repeat(2, 1fr); }
+    .start-content h1 { font-size: clamp(52px, 16vw, 84px); }
+    .eyebrow { letter-spacing: 2px; }
+    .menu-footer { padding: 0 10px; }
+}
+
+@media (max-width: 430px) {
+    .menu-buttons { gap: 8px; margin-top: 22px; }
+    .menu-button { min-height: 48px; font-size: 10px; }
+    .start-content h1 { font-size: 50px; }
+    .tagline { font-size: 9px !important; }
+    .desk-phone, .magnifier { display: none; }
+}
+
+/* ==========================================================
+   VERSÃO FINAL DA TELA INICIAL — INVESTIGAÇÃO CINEMATOGRÁFICA
+   ========================================================== */
+.start-screen {
+    background: #020507;
+}
+.start-screen::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 50% 48%, transparent 0 24%, rgba(0,0,0,.16) 52%, rgba(0,0,0,.72) 100%),
+        linear-gradient(90deg, rgba(0,0,0,.72), transparent 34%, transparent 68%, rgba(0,0,0,.46));
+}
+.menu-scene { background:
+    radial-gradient(circle at 77% 25%, rgba(33,184,198,.24), transparent 25%),
+    radial-gradient(circle at 18% 40%, rgba(31,102,116,.20), transparent 28%),
+    linear-gradient(115deg,#050b0e 0%,#09171b 45%,#020507 100%);
+}
+.window-glow {
+    width: 58vw; min-width: 520px; height: 76vh; right: -3vw; top: -4vh;
+    background:
+      repeating-linear-gradient(90deg, transparent 0 12%, rgba(103,211,219,.10) 12.2% 12.45%, transparent 12.7% 25%),
+      repeating-linear-gradient(0deg, transparent 0 16%, rgba(103,211,219,.07) 16.2% 16.5%, transparent 16.8% 33%),
+      radial-gradient(circle at 62% 60%, rgba(59,220,228,.30), transparent 3%),
+      radial-gradient(circle at 22% 76%, rgba(31,150,167,.28), transparent 4%),
+      linear-gradient(180deg,rgba(10,47,58,.78),rgba(2,9,12,.96));
+}
+.window-glow::after {
+    content:""; position:absolute; inset:0;
+    background: repeating-linear-gradient(100deg, transparent 0 17px, rgba(210,245,245,.08) 18px 19px, transparent 20px 42px);
+    opacity:.45; animation: rainMove 8s linear infinite;
+}
+.desk {
+    height: 31vh;
+    background: linear-gradient(175deg,#252b2c 0%,#111719 34%,#050708 100%);
+}
+.desk::before {
+    content:""; position:absolute; left:7%; right:7%; top:15%; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(100,213,218,.32),transparent);
+    box-shadow:0 55px 0 rgba(0,0,0,.35);
+}
+.paper { filter: contrast(1.08); }
+.case-file { border-color:rgba(236,171,95,.62); }
+.desk-phone { color:#a5c8c8; }
+.start-content { max-width: 1040px; }
+.eyebrow { text-shadow:0 0 18px rgba(111,222,227,.12); }
+.start-content h1 {
+    font-size: clamp(62px, 9.5vw, 132px);
+    letter-spacing: 3px;
+    transform: scaleX(.94);
+}
+.start-content h1 span { color:#e5eeee; }
+.tagline { letter-spacing:3px; }
+.menu-buttons {
+    grid-template-columns: repeat(5, minmax(120px,1fr));
+    width:min(980px,94vw);
+}
+.menu-button {
+    min-height:58px;
+    border-radius:3px;
+    text-transform:uppercase;
+    font-weight:600;
+    letter-spacing:1.5px;
+    backdrop-filter: blur(5px);
+}
+.menu-button.primary { box-shadow:0 0 28px rgba(63,216,223,.10), inset 0 0 20px rgba(63,216,223,.08); }
+.menu-button:nth-child(2), .menu-button:nth-child(4), .menu-button.exit-button {
+    border-color:rgba(235,169,97,.66);
+}
+.menu-button.exit-button .button-icon { color:#efad68; }
+.menu-button:active { transform:translateY(0) scale(.98); }
+.menu-footer { margin-top:18px; }
+
+@media (max-width: 900px) {
+    .menu-buttons { grid-template-columns:repeat(3,1fr); }
+}
+@media (max-width: 620px) {
+    .menu-buttons { grid-template-columns:repeat(2,1fr); }
+    .window-glow { width:100vw; right:-38vw; }
+    .start-content h1 { font-size:clamp(48px,15vw,82px); }
+}

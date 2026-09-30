@@ -3,313 +3,841 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Número Desconhecido</title>
+
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <!-- TELA INICIAL -->
-    <section id="startScreen" class="screen start-screen">
-        <div class="start-content">
-            <div class="mystery-icon">?</div>
+<!-- =====================================================
+     TELA INICIAL
+===================================================== -->
 
-            <h1>NÚMERO<br>DESCONHECIDO</h1>
+<section id="startScreen" class="screen start-screen">
 
-            <p>
-                Algumas mensagens deveriam<br>
-                permanecer sem resposta.
-            </p>
+    <!-- CENÁRIO -->
+    <div class="menu-scene">
 
-            <button id="startButton" class="main-button">
-                INICIAR JOGO
+        <!-- Janela -->
+        <div class="city-window">
+
+            <div class="city-sky"></div>
+
+            <div class="building building-1"></div>
+            <div class="building building-2"></div>
+            <div class="building building-3"></div>
+            <div class="building building-4"></div>
+
+            <div class="window-lines"></div>
+
+            <div class="neon neon-1">24H</div>
+            <div class="neon neon-2">CAFÉ</div>
+            <div class="neon neon-3">7</div>
+
+        </div>
+
+
+        <!-- Chuva -->
+        <div class="rain rain-1"></div>
+        <div class="rain rain-2"></div>
+        <div class="rain rain-3"></div>
+
+
+        <!-- Parede esquerda -->
+        <div class="office-wall">
+
+            <div class="wall-paper paper-note-1">
+                HELENA<br>
+                22:18
+            </div>
+
+            <div class="wall-paper paper-note-2">
+                NÃO<br>
+                CONFIE
+            </div>
+
+            <div class="wall-paper paper-note-3">
+                14/10
+            </div>
+
+            <div class="red-string string-1"></div>
+            <div class="red-string string-2"></div>
+
+        </div>
+
+
+        <!-- Luminária -->
+        <div class="lamp">
+
+            <div class="lamp-head"></div>
+
+            <div class="lamp-arm"></div>
+
+            <div class="lamp-light"></div>
+
+        </div>
+
+
+        <!-- Mesa -->
+        <div class="desk">
+
+            <div class="desk-paper paper-main">
+                <span>ARQUIVO</span>
+                <strong>CASO 07</strong>
+                <small>CONFIDENCIAL</small>
+            </div>
+
+            <div class="desk-paper paper-small">
+                22:18<br>
+                HELENA<br>
+                DESAPARECIDA
+            </div>
+
+            <div class="old-phone">
+                <div class="phone-base"></div>
+                <div class="phone-handset"></div>
+            </div>
+
+            <div class="coffee"></div>
+
+            <div class="pen"></div>
+
+            <div class="magnifying-glass">
+                <div></div>
+            </div>
+
+            <div class="folder">
+                <span>INVESTIGAÇÃO</span>
+            </div>
+
+        </div>
+
+
+        <!-- Efeito de iluminação -->
+        <div class="scene-light"></div>
+
+    </div>
+
+
+    <!-- ESCURECIMENTO -->
+    <div class="menu-overlay"></div>
+
+
+    <!-- CONTEÚDO -->
+    <div class="start-content">
+
+        <div class="eyebrow">
+            UM JOGO DE MISTÉRIO E INVESTIGAÇÃO
+        </div>
+
+        <div class="menu-subtitle">
+            DECIFRE O ENIGMA
+        </div>
+
+
+        <div class="title-decoration">
+
+            <span></span>
+
+            <div class="question-symbol">
+                ?
+            </div>
+
+            <span></span>
+
+        </div>
+
+
+        <h1>
+            NÚMERO
+            <br>
+            <span>DESCONHECIDO</span>
+        </h1>
+
+
+        <p class="tagline">
+            ALGUMAS MENSAGENS DEVERIAM
+            <br>
+            PERMANECER SEM RESPOSTA.
+        </p>
+
+
+        <!-- BOTÕES -->
+
+        <div class="menu-buttons">
+
+            <button
+                id="startButton"
+                class="menu-button primary"
+                type="button"
+            >
+
+                <span class="button-icon">▣</span>
+
+                <span>
+                    NOVO JOGO
+                </span>
+
             </button>
 
-            <small>Uma história de escolhas e mistério</small>
+
+            <button
+                class="menu-button orange"
+                type="button"
+                onclick="document.getElementById('startButton').click()"
+            >
+
+                <span class="button-icon">▤</span>
+
+                <span>
+                    CARREGAR
+                </span>
+
+            </button>
+
+
+            <button
+                class="menu-button"
+                type="button"
+                onclick="alert('As opções serão adicionadas em uma próxima atualização.')"
+            >
+
+                <span class="button-icon">⚙</span>
+
+                <span>
+                    OPÇÕES
+                </span>
+
+            </button>
+
+
+            <button
+                class="menu-button orange"
+                type="button"
+                onclick="alert('Extras serão desbloqueados durante a investigação.')"
+            >
+
+                <span class="button-icon">⌕</span>
+
+                <span>
+                    EXTRAS
+                </span>
+
+            </button>
+
+
+            <button
+                class="menu-button orange exit-button"
+                type="button"
+                onclick="alert('Até a próxima investigação.')"
+            >
+
+                <span class="button-icon">↪</span>
+
+                <span>
+                    SAIR
+                </span>
+
+            </button>
+
         </div>
-    </section>
 
 
-    <!-- CELULAR -->
-    <main id="gameScreen" class="game-screen hidden">
+        <div class="menu-footer">
 
-        <div class="phone">
+            <span>
+                © 2026 ENIGMA STUDIOS
+            </span>
 
-            <!-- STATUS -->
-            <div class="status-bar">
-                <span id="phoneClock">23:41</span>
+            <span>
+                VERSÃO 1.0
+            </span>
 
-                <div class="status-right">
-                    <span>▮▮▮</span>
-                    <span>◔</span>
+        </div>
 
-                    <div class="battery">
-                        <div id="batteryLevel"></div>
-                    </div>
+    </div>
+
+</section>
+
+
+
+<!-- =====================================================
+     JOGO
+===================================================== -->
+
+<main
+    id="gameScreen"
+    class="game-screen hidden"
+>
+
+    <div class="phone">
+
+
+        <!-- STATUS -->
+        <div class="status-bar">
+
+            <span id="phoneClock">
+                23:41
+            </span>
+
+            <div class="status-right">
+
+                <span>
+                    ▮▮▮
+                </span>
+
+                <span>
+                    ◔
+                </span>
+
+                <div class="battery">
+
+                    <div id="batteryLevel"></div>
+
                 </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =================================================
+             TELA PRINCIPAL DO CELULAR
+        ================================================== -->
+
+        <section
+            id="homeScreen"
+            class="phone-screen home-screen"
+        >
+
+            <div class="wallpaper">
+
+                <div
+                    id="homeTime"
+                    class="home-time"
+                >
+                    23:41
+                </div>
+
+                <div class="home-date">
+                    HOJE
+                </div>
+
+
+                <div
+                    id="notificationArea"
+                    class="notification-area"
+                ></div>
+
+
+                <div class="apps">
+
+
+                    <button
+                        class="app"
+                        data-app="messages"
+                    >
+
+                        <span class="app-icon messages-icon">
+                            💬
+                        </span>
+
+                        <span>
+                            Mensagens
+                        </span>
+
+                        <b id="messageBadge">
+                            1
+                        </b>
+
+                    </button>
+
+
+                    <button
+                        class="app"
+                        data-app="gallery"
+                    >
+
+                        <span class="app-icon gallery-icon">
+                            📷
+                        </span>
+
+                        <span>
+                            Galeria
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        class="app"
+                        data-app="phone"
+                    >
+
+                        <span class="app-icon phone-icon">
+                            ☎
+                        </span>
+
+                        <span>
+                            Telefone
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        class="app"
+                        data-app="clues"
+                    >
+
+                        <span class="app-icon clue-icon">
+                            🔎
+                        </span>
+
+                        <span>
+                            Pistas
+                        </span>
+
+                        <b id="clueBadge">
+                            0
+                        </b>
+
+                    </button>
+
+
+                    <button
+                        class="app"
+                        data-app="notes"
+                    >
+
+                        <span class="app-icon notes-icon">
+                            📝
+                        </span>
+
+                        <span>
+                            Notas
+                        </span>
+
+                    </button>
+
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             MENSAGENS
+        ================================================== -->
+
+        <section
+            id="messagesApp"
+            class="phone-screen app-screen hidden"
+        >
+
+            <div class="app-header">
+
+                <button
+                    class="back-button"
+                    data-back
+                >
+                    ‹
+                </button>
+
+
+                <div class="header-contact">
+
+                    <div class="contact-avatar">
+                        ?
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Número Desconhecido
+                        </strong>
+
+                        <small id="onlineStatus">
+                            desconhecido
+                        </small>
+
+                    </div>
+
+                </div>
+
             </div>
 
 
-            <!-- TELA INICIAL DO CELULAR -->
-            <section id="homeScreen" class="phone-screen home-screen">
+            <div
+                id="chat"
+                class="chat"
+            >
 
-                <div class="wallpaper">
-
-                    <div class="home-time" id="homeTime">
-                        23:41
-                    </div>
-
-                    <div class="home-date">
-                        HOJE
-                    </div>
-
-                    <div id="notificationArea" class="notification-area"></div>
-
-                    <div class="apps">
-
-                        <button class="app" data-app="messages">
-                            <span class="app-icon messages-icon">💬</span>
-                            <span>Mensagens</span>
-                            <b id="messageBadge">1</b>
-                        </button>
-
-                        <button class="app" data-app="gallery">
-                            <span class="app-icon gallery-icon">📷</span>
-                            <span>Galeria</span>
-                        </button>
-
-                        <button class="app" data-app="phone">
-                            <span class="app-icon phone-icon">☎</span>
-                            <span>Telefone</span>
-                        </button>
-
-                        <button class="app" data-app="clues">
-                            <span class="app-icon clue-icon">🔎</span>
-                            <span>Pistas</span>
-                            <b id="clueBadge">0</b>
-                        </button>
-
-                        <button class="app" data-app="notes">
-                            <span class="app-icon notes-icon">📝</span>
-                            <span>Notas</span>
-                        </button>
-
-                    </div>
-
+                <div class="date-divider">
+                    HOJE
                 </div>
 
-            </section>
+            </div>
 
 
-            <!-- MENSAGENS -->
-            <section id="messagesApp" class="phone-screen app-screen hidden">
+            <div
+                id="choices"
+                class="choices hidden"
+            >
 
-                <div class="app-header">
-                    <button class="back-button" data-back>‹</button>
+                <span>
+                    Escolha sua resposta:
+                </span>
 
-                    <div class="header-contact">
-                        <div class="contact-avatar">?</div>
+                <div id="choiceButtons"></div>
 
-                        <div>
-                            <strong>Número Desconhecido</strong>
-                            <small id="onlineStatus">desconhecido</small>
-                        </div>
-                    </div>
+            </div>
+
+
+            <div class="message-bar">
+
+                <div>
+                    Mensagem
                 </div>
 
-                <div id="chat" class="chat">
-
-                    <div class="date-divider">
-                        HOJE
-                    </div>
-
-                </div>
-
-                <div id="choices" class="choices hidden">
-                    <span>Escolha sua resposta:</span>
-                    <div id="choiceButtons"></div>
-                </div>
-
-                <div class="message-bar">
-                    <div>Mensagem</div>
-                    <button>➤</button>
-                </div>
-
-            </section>
-
-
-            <!-- GALERIA -->
-            <section id="galleryApp" class="phone-screen app-screen hidden">
-
-                <div class="app-header simple-header">
-                    <button class="back-button" data-back>‹</button>
-                    <strong>Galeria</strong>
-                </div>
-
-                <div class="gallery-content">
-
-                    <div id="lockedPhoto" class="locked-photo">
-                        <div>🔒</div>
-                        <span>Foto bloqueada</span>
-                        <small>Encontre a pista necessária.</small>
-                    </div>
-
-                    <div id="photoUnlocked" class="photo-unlocked hidden">
-
-                        <div class="fake-photo">
-
-                            <div class="photo-night"></div>
-
-                            <div class="photo-person">
-                                ?
-                            </div>
-
-                            <div class="photo-caption">
-                                14 DE OUTUBRO — 22:18
-                            </div>
-
-                        </div>
-
-                        <p>
-                            Uma fotografia antiga.
-                            Há alguém ao fundo que você não reconhece.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <!-- TELEFONE -->
-            <section id="phoneApp" class="phone-screen app-screen hidden">
-
-                <div class="app-header simple-header">
-                    <button class="back-button" data-back>‹</button>
-                    <strong>Telefone</strong>
-                </div>
-
-                <div class="call-list">
-
-                    <div class="call-item">
-                        <div class="call-icon missed">↙</div>
-
-                        <div>
-                            <strong>Número Desconhecido</strong>
-                            <small>Chamada perdida</small>
-                        </div>
-
-                        <span>23:52</span>
-                    </div>
-
-                    <div class="call-item">
-                        <div class="call-icon">↗</div>
-
-                        <div>
-                            <strong>Número Privado</strong>
-                            <small>Chamada recebida</small>
-                        </div>
-
-                        <span>23:17</span>
-                    </div>
-
-                </div>
-
-                <button id="callButton" class="call-button">
-                    LIGAR PARA O NÚMERO
+                <button>
+                    ➤
                 </button>
 
-            </section>
+            </div>
+
+        </section>
 
 
-            <!-- PISTAS -->
-            <section id="cluesApp" class="phone-screen app-screen hidden">
 
-                <div class="app-header simple-header">
-                    <button class="back-button" data-back>‹</button>
-                    <strong>Pistas</strong>
-                </div>
+        <!-- =================================================
+             GALERIA
+        ================================================== -->
 
-                <div id="cluesList" class="clues-list">
+        <section
+            id="galleryApp"
+            class="phone-screen app-screen hidden"
+        >
 
-                    <div class="empty-clues">
-                        Nenhuma pista encontrada.
+            <div class="app-header simple-header">
+
+                <button
+                    class="back-button"
+                    data-back
+                >
+                    ‹
+                </button>
+
+                <strong>
+                    Galeria
+                </strong>
+
+            </div>
+
+
+            <div class="gallery-content">
+
+
+                <div
+                    id="lockedPhoto"
+                    class="locked-photo"
+                >
+
+                    <div>
+                        🔒
                     </div>
 
+                    <span>
+                        Foto bloqueada
+                    </span>
+
+                    <small>
+                        Encontre a pista necessária.
+                    </small>
+
                 </div>
 
-            </section>
+
+                <div
+                    id="photoUnlocked"
+                    class="photo-unlocked hidden"
+                >
+
+                    <div class="fake-photo">
+
+                        <div class="photo-night"></div>
+
+                        <div class="photo-person">
+                            ?
+                        </div>
+
+                        <div class="photo-caption">
+                            14 DE OUTUBRO — 22:18
+                        </div>
+
+                    </div>
 
 
-            <!-- NOTAS -->
-            <section id="notesApp" class="phone-screen app-screen hidden">
-
-                <div class="app-header simple-header">
-                    <button class="back-button" data-back>‹</button>
-                    <strong>Notas</strong>
-                </div>
-
-                <div class="notes-content">
-
-                    <h3>MEU DIÁRIO</h3>
-
-                    <p id="playerNotes">
-                        Ainda não escrevi nada...
+                    <p>
+                        Uma fotografia antiga.
+                        Há alguém ao fundo que você não reconhece.
                     </p>
 
                 </div>
 
-            </section>
+            </div>
+
+        </section>
 
 
-            <!-- DOCK -->
-            <div id="dock" class="dock">
 
-                <button data-app="messages">
-                    💬
+        <!-- =================================================
+             TELEFONE
+        ================================================== -->
+
+        <section
+            id="phoneApp"
+            class="phone-screen app-screen hidden"
+        >
+
+            <div class="app-header simple-header">
+
+                <button
+                    class="back-button"
+                    data-back
+                >
+                    ‹
                 </button>
 
-                <button data-app="gallery">
-                    📷
-                </button>
-
-                <button data-app="phone">
-                    ☎
-                </button>
-
-                <button data-app="clues">
-                    🔎
-                </button>
+                <strong>
+                    Telefone
+                </strong>
 
             </div>
 
-        </div>
 
-    </main>
+            <div class="call-list">
 
 
-    <!-- FINAL -->
-    <section id="endScreen" class="screen end-screen hidden">
+                <div class="call-item">
 
-        <div class="end-content">
+                    <div class="call-icon missed">
+                        ↙
+                    </div>
 
-            <div class="end-icon">?</div>
+                    <div>
 
-            <h1 id="endTitle">FIM</h1>
+                        <strong>
+                            Número Desconhecido
+                        </strong>
 
-            <p id="endText"></p>
+                        <small>
+                            Chamada perdida
+                        </small>
 
-            <button id="restartButton" class="main-button">
-                JOGAR NOVAMENTE
+                    </div>
+
+                    <span>
+                        23:52
+                    </span>
+
+                </div>
+
+
+                <div class="call-item">
+
+                    <div class="call-icon">
+                        ↗
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Número Privado
+                        </strong>
+
+                        <small>
+                            Chamada recebida
+                        </small>
+
+                    </div>
+
+                    <span>
+                        23:17
+                    </span>
+
+                </div>
+
+
+            </div>
+
+
+            <button
+                id="callButton"
+                class="call-button"
+            >
+                LIGAR PARA O NÚMERO
+            </button>
+
+        </section>
+
+
+
+        <!-- =================================================
+             PISTAS
+        ================================================== -->
+
+        <section
+            id="cluesApp"
+            class="phone-screen app-screen hidden"
+        >
+
+            <div class="app-header simple-header">
+
+                <button
+                    class="back-button"
+                    data-back
+                >
+                    ‹
+                </button>
+
+                <strong>
+                    Pistas
+                </strong>
+
+            </div>
+
+
+            <div
+                id="cluesList"
+                class="clues-list"
+            >
+
+                <div class="empty-clues">
+                    Nenhuma pista encontrada.
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             NOTAS
+        ================================================== -->
+
+        <section
+            id="notesApp"
+            class="phone-screen app-screen hidden"
+        >
+
+            <div class="app-header simple-header">
+
+                <button
+                    class="back-button"
+                    data-back
+                >
+                    ‹
+                </button>
+
+                <strong>
+                    Notas
+                </strong>
+
+            </div>
+
+
+            <div class="notes-content">
+
+                <h3>
+                    MEU DIÁRIO
+                </h3>
+
+                <p id="playerNotes">
+                    Ainda não escrevi nada...
+                </p>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- DOCK -->
+
+        <div class="dock">
+
+            <button data-app="messages">
+                💬
+            </button>
+
+            <button data-app="gallery">
+                📷
+            </button>
+
+            <button data-app="phone">
+                ☎
+            </button>
+
+            <button data-app="clues">
+                🔎
             </button>
 
         </div>
 
-    </section>
+
+    </div>
+
+</main>
 
 
-    <script src="script.js"></script>
+
+<!-- =====================================================
+     FINAL
+===================================================== -->
+
+<section
+    id="endScreen"
+    class="screen end-screen hidden"
+>
+
+    <div class="end-content">
+
+        <div class="end-icon">
+            ?
+        </div>
+
+        <h1 id="endTitle">
+            FIM
+        </h1>
+
+        <p id="endText"></p>
+
+        <button
+            id="restartButton"
+            class="main-button"
+        >
+            JOGAR NOVAMENTE
+        </button>
+
+    </div>
+
+</section>
+
+
+
+<!-- =====================================================
+     JAVASCRIPT
+===================================================== -->
+
+<script src="script.js"></script>
 
 </body>
 </html>
