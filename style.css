@@ -490,6 +490,10 @@ button {
 .app-screen {
     background:
         radial-gradient(circle at top, #1b2228, #0d1115 60%);
+
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 .app-header {
@@ -564,9 +568,9 @@ button {
 /* =========================
    CHAT
 ========================= */
-
 .chat {
-    height: calc(100% - 123px);
+    flex: 1;
+    min-height: 0;
 
     overflow-y: auto;
 
@@ -680,11 +684,17 @@ button {
 ========================= */
 
 .choices {
+    flex-shrink: 0;
+
     padding: 9px 12px;
 
     background: #10151a;
 
     border-top: 1px solid #2b3238;
+
+    position: relative;
+
+    z-index: 10;
 }
 
 .choices > span {
@@ -731,12 +741,13 @@ button {
 ========================= */
 
 .message-bar {
-    position: absolute;
+    position: relative;
 
-    bottom: 0;
+    flex-shrink: 0;
 
-    left: 0;
-    right: 0;
+    left: auto;
+    right: auto;
+    bottom: auto;
 
     height: 55px;
 
