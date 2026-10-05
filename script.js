@@ -1,2268 +1,3521 @@
-/* =========================================================
+/* =====================================================
    NÚMERO DESCONHECIDO
-   SCRIPT.JS — VERSÃO COMPLETA
-========================================================= */
+   CAPÍTULO 1 — A CAIXA AZUL
+===================================================== */
 
-document.addEventListener("DOMContentLoaded", () => {
 
-    /* =====================================================
-       ELEMENTOS PRINCIPAIS
-    ====================================================== */
+/* =====================================================
+   ELEMENTOS
+===================================================== */
 
-    const startScreen = document.getElementById("startScreen");
-    const gameScreen = document.getElementById("gameScreen");
-    const endScreen = document.getElementById("endScreen");
+const startScreen = document.getElementById("startScreen");
+const gameScreen = document.getElementById("gameScreen");
+const endScreen = document.getElementById("endScreen");
 
-    const startButton = document.getElementById("startButton");
-    const restartButton = document.getElementById("restartButton");
+const startButton = document.getElementById("startButton");
+const restartButton = document.getElementById("restartButton");
 
-    const chat = document.getElementById("chat");
-    const choices = document.getElementById("choices");
-    const choiceButtons = document.getElementById("choiceButtons");
+const homeScreen = document.getElementById("homeScreen");
 
-    const endTitle = document.getElementById("endTitle");
-    const endText = document.getElementById("endText");
+const chat = document.getElementById("chat");
+const choices = document.getElementById("choices");
+const choiceButtons = document.getElementById("choiceButtons");
 
-    const phoneClock = document.getElementById("phoneClock");
-    const homeTime = document.getElementById("homeTime");
+const phoneClock = document.getElementById("phoneClock");
+const homeTime = document.getElementById("homeTime");
 
-    const messageBadge = document.getElementById("messageBadge");
-    const clueBadge = document.getElementById("clueBadge");
+const notificationArea = document.getElementById("notificationArea");
 
-    const cluesList = document.getElementById("cluesList");
-    const playerNotes = document.getElementById("playerNotes");
+const messageBadge = document.getElementById("messageBadge");
+const clueBadge = document.getElementById("clueBadge");
 
-    const lockedPhoto = document.getElementById("lockedPhoto");
-    const photoUnlocked = document.getElementById("photoUnlocked");
+const cluesList = document.getElementById("cluesList");
 
-    const callButton = document.getElementById("callButton");
+const lockedPhoto = document.getElementById("lockedPhoto");
+const photoUnlocked = document.getElementById("photoUnlocked");
 
-    /* =====================================================
-       ESTADO DO JOGO
-    ====================================================== */
+const playerNotes = document.getElementById("playerNotes");
 
-    let currentScene = 0;
+const endTitle = document.getElementById("endTitle");
+const endText = document.getElementById("endText");
 
-    let clues = [];
+const callButton = document.getElementById("callButton");
 
-    let notes = [];
 
-    let trust = 0;
+/* =====================================================
+   ESTADO DO JOGO
+===================================================== */
 
-    let suspicion = 0;
+let gameStarted = false;
 
-    let courage = 0;
+let currentHour = 23;
+let currentMinute = 41;
 
-    let searchedPhone = false;
+let trust = 0;
+let suspicion = 0;
 
-    let sawPhoto = false;
+let clues = [];
 
-    let answeredCall = false;
+let photoUnlockedState = false;
 
-    let discoveredPlatform = false;
+let boxConfirmed = false;
+let photoInspected = false;
+let callMade = false;
+let askedName = false;
+let discoveredDate = false;
+let discoveredInitials = false;
 
-    let discoveredTime = false;
+let storyProgress = 0;
 
-    let discoveredHelena = false;
 
-    let discoveredDaniel = false;
+/* =====================================================
+   NAVEGAÇÃO
+===================================================== */
 
-    let gameEnded = false;
+const apps = document.querySelectorAll("[data-app]");
 
-    let notificationCount = 0;
+apps.forEach(button => {
 
-    /* =====================================================
-       DADOS DA HISTÓRIA
-    ====================================================== */
+    button.addEventListener("click", () => {
 
-    const scenes = [
+        openApp(button.dataset.app);
 
-        {
-            id: 0,
+    });
 
-            messages: [
-                {
-                    type: "received",
-                    text: "Não conte para ninguém que eu estou falando com você."
-                },
+});
 
-                {
-                    type: "received",
-                    text: "Eu sei que isso parece estranho."
-                },
 
-                {
-                    type: "received",
-                    text: "Mas você precisa confiar em mim."
-                }
-            ],
+const backButtons = document.querySelectorAll("[data-back]");
 
-            choices: [
-                {
-                    text: "Quem é você?",
-                    trust: 1,
-                    next: 1
-                },
-
-                {
-                    text: "Como conseguiu meu número?",
-                    suspicion: 1,
-                    next: 1
-                },
-
-                {
-                    text: "Não vou continuar essa conversa.",
-                    courage: 1,
-                    next: 1
-                }
-            ]
-        },
-
-
-        {
-            id: 1,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "Meu nome não importa agora."
-                },
-
-                {
-                    type: "received",
-                    text: "O que importa é o que aconteceu naquela noite."
-                },
-
-                {
-                    type: "received",
-                    text: "Você estava na estação, não estava?"
-                }
-            ],
-
-            choices: [
-                {
-                    text: "Sim. Como você sabe disso?",
-                    trust: 1,
-                    next: 2
-                },
-
-                {
-                    text: "Não sei do que você está falando.",
-                    suspicion: 1,
-                    next: 2
-                },
-
-                {
-                    text: "O que aconteceu naquela noite?",
-                    courage: 1,
-                    next: 2
-                }
-            ]
-        },
-
-
-        {
-            id: 2,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "Eu estava lá também."
-                },
-
-                {
-                    type: "received",
-                    text: "Mas você não me viu."
-                },
-
-                {
-                    type: "received",
-                    text: "Ninguém deveria ter me visto."
-                },
-
-                {
-                    type: "received",
-                    text: "Olhe sua galeria."
-                },
-
-                {
-                    type: "received",
-                    text: "Existe uma foto que você nunca percebeu."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "Vou olhar.",
-                    trust: 1,
-                    next: 3,
-                    action: "photo"
-                },
-
-                {
-                    text: "Por que eu deveria acreditar em você?",
-                    suspicion: 1,
-                    next: 3
-                }
-            ]
-        },
-
-
-        {
-            id: 3,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "Agora você entendeu."
-                },
-
-                {
-                    type: "received",
-                    text: "Aquela pessoa ao fundo não deveria estar ali."
-                },
-
-                {
-                    type: "received",
-                    text: "E você precisa descobrir quem ela é."
-                },
-
-                {
-                    type: "received",
-                    text: "Procure pelo nome Helena."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "Quem é Helena?",
-                    courage: 1,
-                    next: 4
-                },
-
-                {
-                    text: "Por que você quer que eu procure por ela?",
-                    suspicion: 1,
-                    next: 4
-                },
-
-                {
-                    text: "Eu conheço esse nome.",
-                    trust: 1,
-                    next: 4
-                }
-            ]
-        },
-
-
-        {
-            id: 4,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "Então você se lembra."
-                },
-
-                {
-                    type: "received",
-                    text: "Helena estava com Daniel naquela noite."
-                },
-
-                {
-                    type: "received",
-                    text: "Daniel desapareceu três dias depois."
-                },
-
-                {
-                    type: "received",
-                    text: "A polícia disse que ele foi embora por vontade própria."
-                },
-
-                {
-                    type: "received",
-                    text: "Mas eu sei que não foi isso."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "O que aconteceu com Daniel?",
-                    courage: 1,
-                    next: 5
-                },
-
-                {
-                    text: "Você conhecia Daniel?",
-                    trust: 1,
-                    next: 5
-                },
-
-                {
-                    text: "Isso está ficando perigoso.",
-                    suspicion: 1,
-                    next: 5
-                }
-            ]
-        },
-
-
-        {
-            id: 5,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "Daniel descobriu alguma coisa."
-                },
-
-                {
-                    type: "received",
-                    text: "Algo que não deveria ter descoberto."
-                },
-
-                {
-                    type: "received",
-                    text: "Ele me pediu ajuda."
-                },
-
-                {
-                    type: "received",
-                    text: "Eu cheguei tarde demais."
-                },
-
-                {
-                    type: "received",
-                    text: "Depois disso, tudo mudou."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "Você deixou Daniel sozinho?",
-                    suspicion: 1,
-                    next: 6
-                },
-
-                {
-                    text: "O que ele descobriu?",
-                    courage: 1,
-                    next: 6
-                },
-
-                {
-                    text: "Você tentou ajudá-lo?",
-                    trust: 1,
-                    next: 6
-                }
-            ]
-        },
-
-
-        {
-            id: 6,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "Uma coisa."
-                },
-
-                {
-                    type: "received",
-                    text: "A plataforma 4."
-                },
-
-                {
-                    type: "received",
-                    text: "E um horário."
-                },
-
-                {
-                    type: "received",
-                    text: "00:17."
-                },
-
-                {
-                    type: "received",
-                    text: "Nunca esqueça esses dois números."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "Vou anotar.",
-                    trust: 1,
-                    next: 7,
-                    action: "platform"
-                },
-
-                {
-                    text: "O que acontece às 00:17?",
-                    courage: 1,
-                    next: 7,
-                    action: "time"
-                },
-
-                {
-                    text: "Por que a plataforma 4?",
-                    suspicion: 1,
-                    next: 7,
-                    action: "platform"
-                }
-            ]
-        },
-
-
-        {
-            id: 7,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "Eu não posso explicar tudo por mensagem."
-                },
-
-                {
-                    type: "received",
-                    text: "Existe alguém observando esta conversa."
-                },
-
-                {
-                    type: "received",
-                    text: "E essa pessoa sabe quem você é."
-                },
-
-                {
-                    type: "received",
-                    text: "Vou mandar um áudio."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "Pode mandar.",
-                    trust: 1,
-                    next: 8,
-                    action: "audio"
-                },
-
-                {
-                    text: "Não. Quero saber quem você é primeiro.",
-                    suspicion: 1,
-                    next: 8
-                }
-            ]
-        },
-
-
-        {
-            id: 8,
-
-            messages: [
-                {
-                    type: "audio",
-                    text: "Áudio — 0:17",
-                    audioText: "Se você está ouvindo isso, significa que eu ainda não fui encontrado."
-                },
-
-                {
-                    type: "received",
-                    text: "Agora você sabe demais."
-                },
-
-                {
-                    type: "received",
-                    text: "Desculpa."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "Quem está atrás de você?",
-                    courage: 1,
-                    next: 9
-                },
-
-                {
-                    text: "Você está com medo?",
-                    trust: 1,
-                    next: 9
-                },
-
-                {
-                    text: "Vou procurar ajuda.",
-                    suspicion: 1,
-                    next: 9
-                }
-            ]
-        },
-
-
-        {
-            id: 9,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "Não faça isso."
-                },
-
-                {
-                    type: "received",
-                    text: "Se contar para alguém, eles vão saber."
-                },
-
-                {
-                    type: "received",
-                    text: "Inclusive a pessoa que está perto de você agora."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "Quem está perto de mim?",
-                    courage: 1,
-                    next: 10
-                },
-
-                {
-                    text: "Isso é uma ameaça?",
-                    suspicion: 1,
-                    next: 10
-                },
-
-                {
-                    text: "Vou confiar em você.",
-                    trust: 1,
-                    next: 10
-                }
-            ]
-        },
-
-
-        {
-            id: 10,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "Olhe pela janela."
-                },
-
-                {
-                    type: "received",
-                    text: "Não acenda a luz."
-                },
-
-                {
-                    type: "received",
-                    text: "Tem alguém parado do outro lado da rua."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "Vou olhar.",
-                    courage: 1,
-                    next: 11
-                },
-
-                {
-                    text: "Não vou fazer isso.",
-                    trust: 1,
-                    next: 11
-                },
-
-                {
-                    text: "Como você sabe o que estou fazendo?",
-                    suspicion: 1,
-                    next: 11
-                }
-            ]
-        },
-
-
-        {
-            id: 11,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "Porque eu estou vendo você."
-                },
-
-                {
-                    type: "received",
-                    text: "Não da rua."
-                },
-
-                {
-                    type: "received",
-                    text: "Da câmera."
-                },
-
-                {
-                    type: "received",
-                    text: "Seu celular está comprometido."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "Como eu desligo isso?",
-                    courage: 1,
-                    next: 12
-                },
-
-                {
-                    text: "Você fez isso?",
-                    suspicion: 1,
-                    next: 12
-                },
-
-                {
-                    text: "Então você consegue me ver?",
-                    trust: 1,
-                    next: 12
-                }
-            ]
-        },
-
-
-        {
-            id: 12,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "Não."
-                },
-
-                {
-                    type: "received",
-                    text: "Eu só descobri como funciona."
-                },
-
-                {
-                    type: "received",
-                    text: "Foi assim que encontrei você."
-                },
-
-                {
-                    type: "received",
-                    text: "Mas existe uma maneira de descobrir quem está por trás disso."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "Qual?",
-                    courage: 1,
-                    next: 13
-                },
-
-                {
-                    text: "Eu não confio mais em você.",
-                    suspicion: 1,
-                    next: 13
-                }
-            ]
-        },
-
-
-        {
-            id: 13,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "Atenda a próxima ligação."
-                },
-
-                {
-                    type: "received",
-                    text: "Mesmo que o número seja privado."
-                },
-
-                {
-                    type: "received",
-                    text: "Essa será sua única oportunidade."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "Vou atender.",
-                    courage: 1,
-                    next: 14,
-                    action: "call"
-                },
-
-                {
-                    text: "Não vou atender.",
-                    suspicion: 1,
-                    next: 14
-                }
-            ]
-        },
-
-
-        {
-            id: 14,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "A ligação está chegando."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "Esperar.",
-                    trust: 1,
-                    next: 15
-                },
-
-                {
-                    text: "Desligar o celular.",
-                    courage: 1,
-                    next: 15
-                }
-            ]
-        },
-
-
-        {
-            id: 15,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "Você ouviu a voz?"
-                },
-
-                {
-                    type: "received",
-                    text: "Era Helena."
-                },
-
-                {
-                    type: "received",
-                    text: "Agora você sabe quem está envolvida."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "Quem é você afinal?",
-                    courage: 1,
-                    next: 16
-                },
-
-                {
-                    text: "Helena está atrás disso?",
-                    suspicion: 1,
-                    next: 16
-                },
-
-                {
-                    text: "Eu quero ajudar você.",
-                    trust: 1,
-                    next: 16
-                }
-            ]
-        },
-
-
-        {
-            id: 16,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "Meu nome é Yuri."
-                },
-
-                {
-                    type: "received",
-                    text: "Daniel era meu irmão."
-                },
-
-                {
-                    type: "received",
-                    text: "E Helena era a última pessoa que esteve com ele."
-                },
-
-                {
-                    type: "received",
-                    text: "Agora você precisa decidir se vai até a estação."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "Eu vou.",
-                    courage: 2,
-                    next: 17
-                },
-
-                {
-                    text: "Não. Isso é perigoso demais.",
-                    trust: 1,
-                    next: 17
-                },
-
-                {
-                    text: "Quero saber toda a verdade primeiro.",
-                    suspicion: 1,
-                    next: 17
-                }
-            ]
-        },
-
-
-        {
-            id: 17,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "Então escute com atenção."
-                },
-
-                {
-                    type: "received",
-                    text: "Plataforma 4."
-                },
-
-                {
-                    type: "received",
-                    text: "00:17."
-                },
-
-                {
-                    type: "received",
-                    text: "Leve a foto."
-                },
-
-                {
-                    type: "received",
-                    text: "E não confie em quem disser que conhece Daniel."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "Eu vou descobrir a verdade.",
-                    courage: 2,
-                    next: 18
-                },
-
-                {
-                    text: "Vou procurar a polícia.",
-                    trust: 1,
-                    next: 18
-                },
-
-                {
-                    text: "Vou guardar a foto e investigar sozinho.",
-                    suspicion: 1,
-                    next: 18
-                }
-            ]
-        },
-
-
-        {
-            id: 18,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "Está começando."
-                },
-
-                {
-                    type: "received",
-                    text: "Se alguma coisa acontecer comigo..."
-                },
-
-                {
-                    type: "received",
-                    text: "abra a foto novamente."
-                },
-
-                {
-                    type: "received",
-                    text: "Olhe para o reflexo."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "O reflexo?",
-                    courage: 1,
-                    next: 19
-                },
-
-                {
-                    text: "O que existe no reflexo?",
-                    suspicion: 1,
-                    next: 19
-                }
-            ]
-        },
-
-
-        {
-            id: 19,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "Você."
-                },
-
-                {
-                    type: "received",
-                    text: "Você estava naquela fotografia."
-                },
-
-                {
-                    type: "received",
-                    text: "Mas a foto foi tirada antes de você chegar."
-                },
-
-                {
-                    type: "received",
-                    text: "Isso significa que alguém já sabia que você estaria lá."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "Isso não faz sentido.",
-                    suspicion: 1,
-                    next: 20
-                },
-
-                {
-                    text: "Quem sabia?",
-                    courage: 1,
-                    next: 20
-                },
-
-                {
-                    text: "Você sabia?",
-                    trust: 1,
-                    next: 20
-                }
-            ]
-        },
-
-
-        {
-            id: 20,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "Eu não."
-                },
-
-                {
-                    type: "received",
-                    text: "Mas agora descobri."
-                },
-
-                {
-                    type: "received",
-                    text: "E acho que você também está perto de descobrir."
-                },
-
-                {
-                    type: "received",
-                    text: "Última pista."
-                },
-
-                {
-                    type: "received",
-                    text: "Olhe o horário da foto."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "23:17...",
-                    courage: 1,
-                    next: 21
-                },
-
-                {
-                    text: "00:17...",
-                    trust: 1,
-                    next: 21
-                }
-            ]
-        },
-
-
-        {
-            id: 21,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "Exatamente."
-                },
-
-                {
-                    type: "received",
-                    text: "Um minuto antes da meia-noite."
-                },
-
-                {
-                    type: "received",
-                    text: "A estação fecha às 23:30."
-                },
-
-                {
-                    type: "received",
-                    text: "Então alguém estava lá depois do horário."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "Eu vou até a estação.",
-                    courage: 2,
-                    next: 22
-                },
-
-                {
-                    text: "Eu quero sair disso.",
-                    trust: 1,
-                    next: 22
-                }
-            ]
-        },
-
-
-        {
-            id: 22,
-
-            messages: [
-                {
-                    type: "received",
-                    text: "Tudo bem."
-                },
-
-                {
-                    type: "received",
-                    text: "Qualquer que seja sua decisão..."
-                },
-
-                {
-                    type: "received",
-                    text: "obrigado por ter continuado comigo."
-                },
-
-                {
-                    type: "received",
-                    text: "Agora o próximo passo é seu."
-                }
-            ],
-
-            choices: [
-                {
-                    text: "Ir até a estação.",
-                    courage: 2,
-                    next: "final"
-                },
-
-                {
-                    text: "Encerrar a conversa.",
-                    trust: 1,
-                    next: "final"
-                },
-
-                {
-                    text: "Investigar tudo sozinho.",
-                    suspicion: 2,
-                    next: "final"
-                }
-            ]
-        }
-
-    ];
-
-
-    /* =====================================================
-       INICIAR JOGO
-    ====================================================== */
-
-    function startGame() {
-
-        currentScene = 0;
-
-        clues = [];
-
-        notes = [];
-
-        trust = 0;
-
-        suspicion = 0;
-
-        courage = 0;
-
-        searchedPhone = false;
-
-        sawPhoto = false;
-
-        answeredCall = false;
-
-        discoveredPlatform = false;
-
-        discoveredTime = false;
-
-        discoveredHelena = false;
-
-        discoveredDaniel = false;
-
-        gameEnded = false;
-
-        notificationCount = 0;
-
-        startScreen.classList.add("hidden");
-
-        endScreen.classList.add("hidden");
-
-        gameScreen.classList.remove("hidden");
-
-        showHome();
-
-        updateClock();
-
-        setTimeout(() => {
-
-            addNotification(
-                "Número Desconhecido",
-                "Você recebeu uma nova mensagem."
-            );
-
-        }, 800);
-
-        setTimeout(() => {
-
-            openMessages();
-
-        }, 1600);
-    }
-
-
-    /* =====================================================
-       REINICIAR
-    ====================================================== */
-
-    function restartGame() {
-
-        endScreen.classList.add("hidden");
-
-        gameScreen.classList.remove("hidden");
-
-        startGame();
+backButtons.forEach(button => {
+
+    button.addEventListener("click", () => {
+
+        openApp("home");
+
+    });
+
+});
+
+
+function openApp(appName) {
+
+    document.querySelectorAll(".phone-screen").forEach(screen => {
+
+        screen.classList.add("hidden");
+
+    });
+
+
+    if (appName === "home") {
+
+        homeScreen.classList.remove("hidden");
+
+        return;
 
     }
 
 
-    /* =====================================================
-       HOME
-    ====================================================== */
+    const target =
+        document.getElementById(`${appName}App`);
 
-    function showHome() {
-
-        hideAllApps();
-
-        const home = document.getElementById("homeScreen");
-
-        if (home) {
-            home.classList.remove("hidden");
-        }
-
-        updateHomeClock();
-    }
+    if (!target) return;
 
 
-    /* =====================================================
-       ABRIR MENSAGENS
-    ====================================================== */
+    target.classList.remove("hidden");
 
-    function openMessages() {
 
-        hideAllApps();
-
-        const app = document.getElementById("messagesApp");
-
-        if (!app) return;
-
-        app.classList.remove("hidden");
+    if (appName === "messages") {
 
         messageBadge.classList.add("hidden");
 
-        if (currentScene === 0 && chat.children.length <= 1) {
+        setTimeout(scrollChat, 100);
 
-            playScene(0);
-
-        }
     }
 
 
-    /* =====================================================
-       ABRIR APLICATIVO
-    ====================================================== */
+    if (appName === "clues") {
 
-    function openApp(name) {
+        renderClues();
 
-        hideAllApps();
-
-        const app = document.getElementById(name + "App");
-
-        if (!app) return;
-
-        app.classList.remove("hidden");
-
-        if (name === "gallery") {
-
-            updateGallery();
-
-        }
-
-        if (name === "clues") {
-
-            updateClues();
-
-        }
-
-        if (name === "notes") {
-
-            updateNotes();
-
-        }
-
-        if (name === "phone") {
-
-            searchedPhone = true;
-
-            addClue(
-                "Chamadas desconhecidas",
-                "Há registros de chamadas privadas e chamadas do número desconhecido."
-            );
-
-        }
     }
 
 
-    /* =====================================================
-       ESCONDER APLICATIVOS
-    ====================================================== */
+    if (appName === "gallery") {
 
-    function hideAllApps() {
+        updateGallery();
 
-        const screens = document.querySelectorAll(".phone-screen");
-
-        screens.forEach(screen => {
-
-            screen.classList.add("hidden");
-
-        });
     }
 
+}
 
-    /* =====================================================
-       CENA
-    ====================================================== */
 
-    async function playScene(sceneIndex) {
+/* =====================================================
+   RELÓGIO
+===================================================== */
 
-        const scene = scenes[sceneIndex];
+function updateClock() {
 
-        if (!scene || gameEnded) return;
+    const hour =
+        String(currentHour).padStart(2, "0");
 
-        currentScene = sceneIndex;
+    const minute =
+        String(currentMinute).padStart(2, "0");
 
-        choices.classList.add("hidden");
 
-        choiceButtons.innerHTML = "";
+    const time =
+        `${hour}:${minute}`;
 
-        for (const message of scene.messages) {
 
-            await wait(500);
+    phoneClock.textContent = time;
 
-            if (message.type === "received") {
+    homeTime.textContent = time;
 
-                addMessage(
-                    message.text,
-                    "received"
-                );
+}
 
-            }
 
-            else if (message.type === "audio") {
+function advanceTime(minutes) {
 
-                addAudioMessage(
-                    message.text,
-                    message.audioText
-                );
+    currentMinute += minutes;
 
-            }
 
-            await wait(450);
+    while (currentMinute >= 60) {
+
+        currentMinute -= 60;
+
+        currentHour++;
+
+
+        if (currentHour >= 24) {
+
+            currentHour = 0;
+
         }
 
-        showChoices(scene.choices);
     }
 
 
-    /* =====================================================
-       ADICIONAR MENSAGEM
-    ====================================================== */
+    updateClock();
 
-    function addMessage(text, type = "received") {
-
-        const message = document.createElement("div");
-
-        message.className =
-            "message " + type;
-
-        const bubble = document.createElement("div");
-
-        bubble.className =
-            "message-bubble";
-
-        bubble.textContent = text;
-
-        const time = document.createElement("span");
-
-        time.className = "message-time";
-
-        time.textContent = getGameTime();
-
-        bubble.appendChild(time);
-
-        message.appendChild(bubble);
-
-        chat.appendChild(message);
-
-        scrollChat();
-    }
+}
 
 
-    /* =====================================================
-       MENSAGEM DE ÁUDIO
-    ====================================================== */
+/* =====================================================
+   CHAT
+===================================================== */
 
-    function addAudioMessage(title, audioText) {
+function clearChat() {
 
-        const message = document.createElement("div");
+    chat.innerHTML = `
+        <div class="date-divider">
+            HOJE
+        </div>
+    `;
 
-        message.className =
-            "message received";
+}
 
-        const bubble = document.createElement("div");
 
-        bubble.className =
-            "message-bubble";
+function addMessage(text, sender = "stranger") {
 
-        const audio = document.createElement("div");
+    const message =
+        document.createElement("div");
 
-        audio.className =
-            "audio-message";
 
-        const button = document.createElement("button");
+    message.className =
+        `message ${sender}`;
 
-        button.className =
-            "audio-button";
 
-        button.textContent = "▶";
+    const time =
+        `${String(currentHour).padStart(2, "0")}:${String(currentMinute).padStart(2, "0")}`;
 
-        const wave = document.createElement("div");
 
-        wave.className =
-            "audio-wave";
+    message.innerHTML = `
+        ${text}
+        <span class="message-time">${time}</span>
+    `;
 
-        for (let i = 0; i < 5; i++) {
 
-            const span =
-                document.createElement("span");
+    chat.appendChild(message);
 
-            wave.appendChild(span);
-        }
 
-        audio.appendChild(button);
+    scrollChat();
 
-        audio.appendChild(wave);
+}
 
-        bubble.appendChild(audio);
 
-        const label =
+function scrollChat() {
+
+    setTimeout(() => {
+
+        chat.scrollTop =
+            chat.scrollHeight;
+
+    }, 50);
+
+}
+
+
+function showTyping(duration = 1200) {
+
+    return new Promise(resolve => {
+
+        const typing =
             document.createElement("div");
 
-        label.style.marginTop = "8px";
 
-        label.style.fontSize = "10px";
+        typing.className =
+            "typing";
 
-        label.style.color = "#999";
 
-        label.textContent = title;
+        typing.innerHTML = `
+            <span></span>
+            <span></span>
+            <span></span>
+        `;
 
-        bubble.appendChild(label);
 
-        const time =
-            document.createElement("span");
+        chat.appendChild(typing);
 
-        time.className = "message-time";
-
-        time.textContent =
-            getGameTime();
-
-        bubble.appendChild(time);
-
-        message.appendChild(bubble);
-
-        chat.appendChild(message);
-
-        button.addEventListener(
-            "click",
-            () => {
-
-                if (button.textContent === "▶") {
-
-                    button.textContent = "■";
-
-                    speakText(audioText);
-
-                    setTimeout(() => {
-
-                        button.textContent = "▶";
-
-                    }, 4500);
-
-                }
-
-            }
-        );
 
         scrollChat();
-    }
 
-
-    /* =====================================================
-       ESCOLHAS
-    ====================================================== */
-
-    function showChoices(options) {
-
-        choices.classList.remove("hidden");
-
-        choiceButtons.innerHTML = "";
-
-        options.forEach((option) => {
-
-            const button =
-                document.createElement("button");
-
-            button.className =
-                "choice-button";
-
-            button.textContent =
-                option.text;
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    chooseOption(option);
-
-                }
-            );
-
-            choiceButtons.appendChild(button);
-
-        });
-    }
-
-
-    /* =====================================================
-       ESCOLHER
-    ====================================================== */
-
-    function chooseOption(option) {
-
-        choices.classList.add("hidden");
-
-        addMessage(
-            option.text,
-            "sent"
-        );
-
-        if (option.trust) {
-
-            trust += option.trust;
-
-        }
-
-        if (option.suspicion) {
-
-            suspicion += option.suspicion;
-
-        }
-
-        if (option.courage) {
-
-            courage += option.courage;
-
-        }
-
-        executeAction(option.action);
-
-        if (option.next === "final") {
-
-            setTimeout(() => {
-
-                determineEnding();
-
-            }, 1600);
-
-            return;
-        }
 
         setTimeout(() => {
 
-            playScene(option.next);
+            typing.remove();
 
-        }, 900);
-    }
+            resolve();
+
+        }, duration);
+
+    });
+
+}
 
 
-    /* =====================================================
-       AÇÕES
-    ====================================================== */
+function sleep(ms) {
 
-    function executeAction(action) {
+    return new Promise(resolve => {
 
-        if (!action) return;
+        setTimeout(resolve, ms);
 
-        if (action === "photo") {
+    });
 
-            sawPhoto = true;
+}
 
-            addClue(
-                "Fotografia misteriosa",
-                "Existe uma pessoa ao fundo da fotografia. O horário registrado chama atenção."
+
+/* =====================================================
+   ESCOLHAS
+===================================================== */
+
+function showChoices(options) {
+
+    choices.classList.remove("hidden");
+
+    choiceButtons.innerHTML = "";
+
+
+    options.forEach(option => {
+
+        const button =
+            document.createElement("button");
+
+
+        button.className =
+            "choice-button";
+
+
+        button.textContent =
+            option.text;
+
+
+        button.addEventListener("click", async () => {
+
+            choices.classList.add("hidden");
+
+
+            addMessage(
+                option.text,
+                "player"
             );
 
-            updateGallery();
 
-        }
-
-
-        if (action === "platform") {
-
-            discoveredPlatform = true;
-
-            addClue(
-                "Plataforma 4",
-                "O número 4 parece estar diretamente relacionado ao desaparecimento de Daniel."
-            );
-
-            addNote(
-                "Plataforma 4 — parece ser importante."
-            );
-
-        }
+            advanceTime(1);
 
 
-        if (action === "time") {
-
-            discoveredTime = true;
-
-            addClue(
-                "00:17",
-                "O horário 00:17 aparece várias vezes na investigação."
-            );
-
-            addNote(
-                "00:17 — horário que Yuri pediu para eu não esquecer."
-            );
-
-        }
+            await sleep(500);
 
 
-        if (action === "audio") {
+            await option.action();
 
-            addClue(
-                "Áudio de Yuri",
-                "Yuri afirma que ainda não foi encontrado e parece estar sendo perseguido."
-            );
-
-        }
-
-
-        if (action === "call") {
-
-            answeredCall = true;
-
-            addClue(
-                "Ligação privada",
-                "Uma chamada privada parece estar ligada diretamente a Helena."
-            );
-
-        }
-
-        updateClueBadge();
-
-    }
-
-
-    /* =====================================================
-       PISTAS
-    ====================================================== */
-
-    function addClue(title, description) {
-
-        if (
-            clues.some(
-                clue => clue.title === title
-            )
-        ) {
-
-            return;
-
-        }
-
-        clues.push({
-            title,
-            description
         });
 
-        updateClues();
 
-        updateClueBadge();
-    }
+        choiceButtons.appendChild(button);
 
+    });
 
-    function updateClues() {
+}
 
-        if (!cluesList) return;
 
-        cluesList.innerHTML = "";
+/* =====================================================
+   NOTIFICAÇÕES
+===================================================== */
 
-        if (clues.length === 0) {
+function notify(title, text) {
 
-            const empty =
-                document.createElement("div");
+    notificationArea.innerHTML = `
+        <div class="notification">
+            <strong>${title}</strong>
+            <span>${text}</span>
+        </div>
+    `;
 
-            empty.className =
-                "empty-clues";
 
-            empty.textContent =
-                "Nenhuma pista encontrada.";
+    setTimeout(() => {
 
-            cluesList.appendChild(empty);
+        notificationArea.innerHTML = "";
 
-            return;
-        }
+    }, 6000);
 
-        clues.forEach(clue => {
+}
 
-            const element =
-                document.createElement("div");
 
-            element.className =
-                "clue";
+/* =====================================================
+   PISTAS
+===================================================== */
 
-            element.innerHTML = `
-                <strong>${escapeHTML(clue.title)}</strong>
-                <p>${escapeHTML(clue.description)}</p>
-            `;
+function addClue(title, description) {
 
-            cluesList.appendChild(element);
-
-        });
-    }
-
-
-    function updateClueBadge() {
-
-        if (!clueBadge) return;
-
-        if (clues.length > 0) {
-
-            clueBadge.textContent =
-                clues.length;
-
-            clueBadge.classList.remove(
-                "hidden"
-            );
-
-        } else {
-
-            clueBadge.classList.add(
-                "hidden"
-            );
-
-        }
-    }
-
-
-    /* =====================================================
-       NOTAS
-    ====================================================== */
-
-    function addNote(text) {
-
-        if (
-            notes.includes(text)
-        ) {
-
-            return;
-
-        }
-
-        notes.push(text);
-
-        updateNotes();
-    }
-
-
-    function updateNotes() {
-
-        if (!playerNotes) return;
-
-        if (notes.length === 0) {
-
-            playerNotes.textContent =
-                "Ainda não escrevi nada...";
-
-            return;
-
-        }
-
-        playerNotes.textContent =
-            notes.map(
-                note => "• " + note
-            ).join("\n\n");
-    }
-
-
-    /* =====================================================
-       GALERIA
-    ====================================================== */
-
-    function updateGallery() {
-
-        if (!lockedPhoto ||
-            !photoUnlocked) return;
-
-        if (sawPhoto) {
-
-            lockedPhoto.classList.add(
-                "hidden"
-            );
-
-            photoUnlocked.classList.remove(
-                "hidden"
-            );
-
-        } else {
-
-            lockedPhoto.classList.remove(
-                "hidden"
-            );
-
-            photoUnlocked.classList.add(
-                "hidden"
-            );
-        }
-    }
-
-
-    /* =====================================================
-       RELÓGIO
-    ====================================================== */
-
-    function updateClock() {
-
-        updateHomeClock();
-
-        setInterval(
-            updateHomeClock,
-            1000
-        );
-    }
-
-
-    function updateHomeClock() {
-
-        const now =
-            new Date();
-
-        const hours =
-            String(
-                now.getHours()
-            ).padStart(2, "0");
-
-        const minutes =
-            String(
-                now.getMinutes()
-            ).padStart(2, "0");
-
-        const time =
-            hours + ":" + minutes;
-
-        if (phoneClock) {
-
-            phoneClock.textContent =
-                time;
-
-        }
-
-        if (homeTime) {
-
-            homeTime.textContent =
-                time;
-
-        }
-    }
-
-
-    function getGameTime() {
-
-        const now =
-            new Date();
-
-        return (
-            String(
-                now.getHours()
-            ).padStart(2, "0")
-            +
-            ":"
-            +
-            String(
-                now.getMinutes()
-            ).padStart(2, "0")
-        );
-    }
-
-
-    /* =====================================================
-       NOTIFICAÇÃO
-    ====================================================== */
-
-    function addNotification(
-        title,
-        text
+    if (
+        clues.some(
+            clue => clue.title === title
+        )
     ) {
 
-        const area =
-            document.getElementById(
-                "notificationArea"
-            );
+        return;
 
-        if (!area) return;
+    }
 
-        notificationCount++;
 
-        if (messageBadge) {
+    clues.push({
+        title,
+        description
+    });
 
-            messageBadge.textContent =
-                notificationCount;
 
-            messageBadge.classList.remove(
-                "hidden"
-            );
+    clueBadge.textContent =
+        clues.length;
 
-        }
 
-        const notification =
-            document.createElement("div");
+    clueBadge.classList.remove(
+        "hidden"
+    );
 
-        notification.className =
-            "notification";
 
-        notification.innerHTML = `
-            <div class="app-icon messages-icon"
-                 style="width:42px;height:42px;font-size:18px;">
-                💬
-            </div>
+    renderClues();
 
-            <div>
-                <strong style="display:block;font-size:12px;">
-                    ${escapeHTML(title)}
-                </strong>
 
-                <span style="display:block;
-                             margin-top:4px;
-                             color:#9699a5;
-                             font-size:10px;">
-                    ${escapeHTML(text)}
-                </span>
+    notify(
+        "Nova pista encontrada",
+        title
+    );
+
+}
+
+
+function renderClues() {
+
+    if (clues.length === 0) {
+
+        cluesList.innerHTML = `
+            <div class="empty-clues">
+                Nenhuma pista encontrada.
             </div>
         `;
 
-        area.prepend(notification);
+        return;
 
-        setTimeout(() => {
-
-            notification.remove();
-
-        }, 6000);
     }
 
 
-    /* =====================================================
-       CHAMADA
-    ====================================================== */
-
-    if (callButton) {
-
-        callButton.addEventListener(
-            "click",
-            () => {
-
-                answeredCall = true;
-
-                addClue(
-                    "Ligação",
-                    "Você decidiu atender a ligação privada."
-                );
-
-                alert(
-                    "Você ouve uma respiração do outro lado.\n\n" +
-                    "\"Não vá para a plataforma 4 sozinho.\"\n\n" +
-                    "A ligação é encerrada."
-                );
-
-            }
-        );
-    }
+    cluesList.innerHTML = "";
 
 
-    /* =====================================================
-       BOTÕES DOS APLICATIVOS
-    ====================================================== */
+    clues.forEach(clue => {
 
-    document.querySelectorAll(
-        "[data-app]"
-    ).forEach(button => {
+        const element =
+            document.createElement("div");
 
-        button.addEventListener(
-            "click",
-            () => {
 
-                const app =
-                    button.dataset.app;
+        element.className =
+            "clue";
 
-                openApp(app);
 
-            }
-        );
+        element.innerHTML = `
+            <strong>${clue.title}</strong>
+            <p>${clue.description}</p>
+        `;
+
+
+        cluesList.appendChild(element);
+
     });
 
-
-    /* =====================================================
-       BOTÕES VOLTAR
-    ====================================================== */
-
-    document.querySelectorAll(
-        "[data-back]"
-    ).forEach(button => {
-
-        button.addEventListener(
-            "click",
-            () => {
-
-                showHome();
-
-            }
-        );
-    });
+}
 
 
-    /* =====================================================
-       FINAL
-    ====================================================== */
+/* =====================================================
+   GALERIA
+===================================================== */
 
-    function determineEnding() {
+function updateGallery() {
 
-        gameEnded = true;
+    if (photoUnlockedState) {
 
-        gameScreen.classList.add(
-            "hidden"
-        );
-
-        endScreen.classList.remove(
+        lockedPhoto.classList.add(
             "hidden"
         );
 
 
-        let title = "";
-
-        let text = "";
-
-
-        /*
-         * FINAL 1 — VERDADE
-         */
-
-        if (
-            courage >= 8 &&
-            clues.length >= 4
-        ) {
-
-            title =
-                "A VERDADE";
-
-            text =
-                "Você decidiu continuar mesmo quando tudo parecia errado. " +
-                "As pistas levaram você até a plataforma 4. " +
-                "Agora você sabe o que aconteceu com Daniel — " +
-                "mas percebe que essa história ainda não terminou.";
-
-        }
-
-
-        /*
-         * FINAL 2 — CONFIANÇA
-         */
-
-        else if (
-            trust >= 8
-        ) {
-
-            title =
-                "A ÚLTIMA MENSAGEM";
-
-            text =
-                "Você escolheu confiar em Yuri. " +
-                "Ele finalmente revela que Daniel deixou uma mensagem " +
-                "antes de desaparecer. " +
-                "A investigação pode continuar, mas agora você sabe " +
-                "que não está sozinho.";
-
-        }
-
-
-        /*
-         * FINAL 3 — DESCONFIANÇA
-         */
-
-        else if (
-            suspicion >= 7
-        ) {
-
-            title =
-                "NÃO CONFIE EM NINGUÉM";
-
-            text =
-                "Você percebeu cedo demais que algumas informações " +
-                "não faziam sentido. " +
-                "Você encerra a conversa antes de descobrir toda a verdade. " +
-                "Horas depois, todas as mensagens desaparecem.";
-
-        }
-
-
-        /*
-         * FINAL 4 — ESTAÇÃO
-         */
-
-        else if (
-            discoveredPlatform &&
-            discoveredTime
-        ) {
-
-            title =
-                "00:17";
-
-            text =
-                "Você chega à estação e encontra a plataforma 4 vazia. " +
-                "O relógio marca exatamente 00:17. " +
-                "Então seu celular recebe uma última mensagem:" +
-                "\n\n\"Você chegou.\"";
-
-        }
-
-
-        /*
-         * FINAL 5 — SECRETO
-         */
-
-        else if (
-            sawPhoto &&
-            answeredCall &&
-            discoveredHelena
-        ) {
-
-            title =
-                "O REFLEXO";
-
-            text =
-                "Você volta para a fotografia e aumenta o zoom. " +
-                "No reflexo da janela existe alguém que não deveria estar ali. " +
-                "A pessoa está segurando exatamente o mesmo celular que você.";
-
-        }
-
-
-        /*
-         * FINAL PADRÃO
-         */
-
-        else {
-
-            title =
-                "CONTINUA...";
-
-            text =
-                "Você decidiu parar por enquanto. " +
-                "Mas, antes de bloquear o número, uma última mensagem aparece:" +
-                "\n\n\"Isso ainda não acabou.\"";
-
-        }
-
-
-        endTitle.textContent =
-            title;
-
-        endText.textContent =
-            text;
-    }
-
-
-    /* =====================================================
-       TEXTO FALADO
-    ====================================================== */
-
-    function speakText(text) {
-
-        if (
-            !("speechSynthesis" in window)
-        ) {
-
-            return;
-
-        }
-
-        window.speechSynthesis.cancel();
-
-        const utterance =
-            new SpeechSynthesisUtterance(
-                text
-            );
-
-        utterance.lang =
-            "pt-BR";
-
-        utterance.rate =
-            0.88;
-
-        utterance.pitch =
-            0.85;
-
-        window.speechSynthesis.speak(
-            utterance
+        photoUnlocked.classList.remove(
+            "hidden"
         );
-    }
 
+    } else {
 
-    /* =====================================================
-       SCROLL DO CHAT
-    ====================================================== */
-
-    function scrollChat() {
-
-        setTimeout(() => {
-
-            chat.scrollTop =
-                chat.scrollHeight;
-
-        }, 50);
-    }
-
-
-    /* =====================================================
-       UTILITÁRIOS
-    ====================================================== */
-
-    function wait(ms) {
-
-        return new Promise(
-            resolve =>
-                setTimeout(
-                    resolve,
-                    ms
-                )
+        lockedPhoto.classList.remove(
+            "hidden"
         );
-    }
 
 
-    function escapeHTML(text) {
-
-        const div =
-            document.createElement(
-                "div"
-            );
-
-        div.textContent =
-            text;
-
-        return div.innerHTML;
-    }
-
-
-    /* =====================================================
-       EVENTOS PRINCIPAIS
-    ====================================================== */
-
-    if (startButton) {
-
-        startButton.addEventListener(
-            "click",
-            startGame
+        photoUnlocked.classList.add(
+            "hidden"
         );
 
     }
 
-
-    if (restartButton) {
-
-        restartButton.addEventListener(
-            "click",
-            restartGame
-        );
-
-    }
+}
 
 
-    /* =====================================================
-       ESTADO INICIAL
-    ====================================================== */
+function unlockPhoto() {
 
-    startScreen.classList.remove(
+    if (photoUnlockedState) return;
+
+
+    photoUnlockedState = true;
+
+
+    updateGallery();
+
+
+    addClue(
+        "Fotografia de 14 de outubro",
+        "Uma pessoa aparece ao fundo da fotografia. A imagem parece ter sido tirada às 22:18."
+    );
+
+}
+
+
+/* =====================================================
+   INÍCIO
+===================================================== */
+
+async function startGame() {
+
+    if (gameStarted) return;
+
+
+    gameStarted = true;
+
+
+    startScreen.classList.add(
         "hidden"
     );
 
-    gameScreen.classList.add(
-        "hidden"
-    );
 
     endScreen.classList.add(
         "hidden"
     );
 
-    updateHomeClock();
 
-});
+    gameScreen.classList.remove(
+        "hidden"
+    );
+
+
+    currentHour = 23;
+
+    currentMinute = 41;
+
+
+    trust = 0;
+
+    suspicion = 0;
+
+
+    clues = [];
+
+
+    boxConfirmed = false;
+
+    photoInspected = false;
+
+    callMade = false;
+
+    askedName = false;
+
+    discoveredDate = false;
+
+    discoveredInitials = false;
+
+
+    storyProgress = 0;
+
+
+    messageBadge.classList.remove(
+        "hidden"
+    );
+
+
+    clueBadge.classList.add(
+        "hidden"
+    );
+
+
+    clueBadge.textContent = "0";
+
+
+    notificationArea.innerHTML = "";
+
+
+    playerNotes.textContent =
+        "Ainda não escrevi nada...";
+
+
+    updateClock();
+
+
+    renderClues();
+
+
+    clearChat();
+
+
+    openApp("messages");
+
+
+    await sleep(1000);
+
+
+    await showTyping(1500);
+
+
+    addMessage(
+        "Não conte para ninguém que eu estou falando com você."
+    );
+
+
+    advanceTime(1);
+
+
+    await sleep(1000);
+
+
+    await showTyping(1400);
+
+
+    addMessage(
+        "Eu sei que isso parece estranho."
+    );
+
+
+    advanceTime(1);
+
+
+    await sleep(900);
+
+
+    await showTyping(1400);
+
+
+    addMessage(
+        "Mas eu preciso saber se a caixa azul ainda está com você."
+    );
+
+
+    advanceTime(1);
+
+
+    showChoices([
+
+        {
+            text: "Quem é você?",
+            action: firstWho
+        },
+
+        {
+            text: "Como conseguiu meu número?",
+            action: firstHow
+        },
+
+        {
+            text: "Que caixa azul?",
+            action: firstBox
+        }
+
+    ]);
+
+}
+
+
+/* =====================================================
+   PRIMEIRA ESCOLHA — QUEM?
+===================================================== */
+
+async function firstWho() {
+
+    suspicion++;
+
+    askedName = true;
+
+
+    await showTyping(1400);
+
+
+    addMessage(
+        "Você realmente não reconhece o número?"
+    );
+
+
+    advanceTime(1);
+
+
+    await sleep(700);
+
+
+    addMessage(
+        "Meu nome não importa agora."
+    );
+
+
+    advanceTime(1);
+
+
+    await sleep(800);
+
+
+    addMessage(
+        "O que importa é o que está dentro daquela caixa."
+    );
+
+
+    addClue(
+        "O desconhecido evita dizer o próprio nome",
+        "Quando você perguntou quem ele é, ele mudou de assunto e voltou a falar sobre a caixa azul."
+    );
+
+
+    await sleep(900);
+
+
+    showChoices([
+
+        {
+            text: "Então me diga o que tem dentro dela.",
+            action: askBoxContent
+        },
+
+        {
+            text: "Se você não diz quem é, não vou confiar em você.",
+            action: challengeTrust
+        }
+
+    ]);
+
+}
+
+
+/* =====================================================
+   PRIMEIRA ESCOLHA — COMO?
+===================================================== */
+
+async function firstHow() {
+
+    trust++;
+
+
+    await showTyping(1400);
+
+
+    addMessage(
+        "Eu consegui seu número através de uma pessoa que você conhece."
+    );
+
+
+    advanceTime(1);
+
+
+    await sleep(800);
+
+
+    addMessage(
+        "Não vou dizer quem."
+    );
+
+
+    advanceTime(1);
+
+
+    await sleep(800);
+
+
+    addMessage(
+        "Ainda não."
+    );
+
+
+    addClue(
+        "Alguém conhecido passou seu número",
+        "O desconhecido afirma que recebeu seu número através de alguém que você conhece."
+    );
+
+
+    await sleep(900);
+
+
+    showChoices([
+
+        {
+            text: "Pelo menos me diga se essa pessoa é alguém próximo de mim.",
+            action: askAboutPerson
+        },
+
+        {
+            text: "Volte a falar sobre a caixa.",
+            action: askBoxContent
+        }
+
+    ]);
+
+}
+
+
+/* =====================================================
+   PRIMEIRA ESCOLHA — CAIXA
+===================================================== */
+
+async function firstBox() {
+
+    suspicion++;
+
+
+    await showTyping(1300);
+
+
+    addMessage(
+        "Não faça isso."
+    );
+
+
+    advanceTime(1);
+
+
+    await sleep(800);
+
+
+    addMessage(
+        "Não finja que não sabe."
+    );
+
+
+    advanceTime(1);
+
+
+    await sleep(900);
+
+
+    addMessage(
+        "Ela está no seu quarto."
+    );
+
+
+    addClue(
+        "Ele conhece detalhes da sua casa",
+        "O desconhecido afirma saber onde a caixa azul está."
+    );
+
+
+    await sleep(900);
+
+
+    showChoices([
+
+        {
+            text: "Como você sabe onde ela está?",
+            action: askHowKnows
+        },
+
+        {
+            text: "O que tem dentro dela?",
+            action: askBoxContent
+        }
+
+    ]);
+
+}
+
+
+/* =====================================================
+   CONTEÚDO DA CAIXA
+===================================================== */
+
+async function insistWhoWasThere() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Você é insistente."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "Isso pode ser uma qualidade ou um problema."
+    );
+
+    advanceTime(1);
+
+    await sleep(900);
+
+    addMessage(
+        "O nome começa com D."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Nome iniciado com D",
+        "A pessoa que estava presente na noite do desaparecimento possui um nome que começa com D."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Daniel?",
+            action: guessDaniel
+        },
+
+        {
+            text: "Não faço ideia.",
+            action: dontKnowDaniel
+        }
+
+    ]);
+}
+
+
+async function guessDaniel() {
+
+    trust++;
+
+    await showTyping(1500);
+
+    addMessage(
+        "Como você sabe esse nome?"
+    );
+
+    advanceTime(1);
+
+    await sleep(900);
+
+    addMessage(
+        "Daniel."
+    );
+
+    advanceTime(1);
+
+    addMessage(
+        "Então você já ouviu falar dele."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Daniel",
+        "Daniel estava ligado à noite do desaparecimento e parece conhecer a história da caixa."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Quem é Daniel?",
+            action: askDaniel
+        },
+
+        {
+            text: "Por que você ficou assustado quando falei o nome dele?",
+            action: askFearDaniel
+        }
+
+    ]);
+}
+
+
+async function dontKnowDaniel() {
+
+    await showTyping(1300);
+
+    addMessage(
+        "Talvez seja melhor assim."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "Mas você vai descobrir o nome em breve."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "A identidade será revelada",
+        "O desconhecido acredita que o nome da pessoa envolvida será descoberto em breve."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Então continue falando.",
+            action: continueInvestigation
+        },
+
+        {
+            text: "Estou cansado desses enigmas.",
+            action: accuse
+        }
+
+    ]);
+}
+
+
+async function askDaniel() {
+
+    await showTyping(1500);
+
+    addMessage(
+        "Daniel era meu amigo."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "E foi a última pessoa que viu Helena."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Daniel viu Helena pela última vez",
+        "Daniel foi a última pessoa conhecida a ver Helena antes do desaparecimento."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Ele sabe o que aconteceu?",
+            action: askDanielKnows
+        },
+
+        {
+            text: "E onde ele está agora?",
+            action: askWhereDaniel
+        }
+
+    ]);
+}
+
+
+async function askFearDaniel() {
+
+    suspicion++;
+
+    await showTyping(1300);
+
+    addMessage(
+        "Porque Daniel desapareceu."
+    );
+
+    advanceTime(1);
+
+    await sleep(900);
+
+    addMessage(
+        "E ninguém deveria estar procurando por ele."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Daniel desapareceu",
+        "O desaparecimento de Daniel parece ser uma parte central do mistério."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Quem fez isso?",
+            action: askWhoDidIt
+        },
+
+        {
+            text: "Quando ele desapareceu?",
+            action: askWhenDaniel
+        }
+
+    ]);
+}
+
+
+async function askDanielKnows() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Ele sabia demais."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "Foi por isso que tudo aconteceu."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Daniel sabia demais",
+        "O desconhecido acredita que o conhecimento de Daniel colocou sua vida em perigo."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "O que ele descobriu?",
+            action: askWhatDanielFound
+        },
+
+        {
+            text: "Você sabe onde ele está?",
+            action: askWhereDaniel
+        }
+
+    ]);
+}
+
+
+async function askWhereDaniel() {
+
+    await showTyping(1500);
+
+    addMessage(
+        "Eu não sei."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "A última coisa que recebi dele foi uma mensagem."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Última mensagem de Daniel",
+        "A última mensagem recebida de Daniel pode conter uma pista sobre seu paradeiro."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "O que dizia?",
+            action: askLastMessage
+        },
+
+        {
+            text: "Você guardou a mensagem?",
+            action: askSavedMessage
+        }
+
+    ]);
+}
+
+
+async function askWhoDidIt() {
+
+    await showTyping(1500);
+
+    addMessage(
+        "Eu ainda não tenho certeza."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "Mas acho que foi alguém próximo deles."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Alguém próximo",
+        "O responsável pode ser alguém próximo de Helena ou Daniel."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Você suspeita de alguém?",
+            action: askSuspect
+        },
+
+        {
+            text: "Então por que me envolveu nisso?",
+            action: askWhyMe
+        }
+
+    ]);
+}
+
+
+async function askWhenDaniel() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Três dias depois de Helena."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "Foi quando percebi que havia alguma coisa errada."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Três dias",
+        "Daniel desapareceu três dias depois de Helena."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "E a polícia?",
+            action: askPolice
+        },
+
+        {
+            text: "Você procurou por ele?",
+            action: askSearch
+        }
+
+    ]);
+}
+
+
+async function askWhatDanielFound() {
+
+    await showTyping(1500);
+
+    addMessage(
+        "Ele encontrou uma gravação."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "Uma gravação feita dentro da estação."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Gravação da estação",
+        "Daniel encontrou uma gravação feita dentro da estação na noite do desaparecimento."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "O que aparecia na gravação?",
+            action: askRecording
+        },
+
+        {
+            text: "Onde está essa gravação?",
+            action: askRecordingLocation
+        }
+
+    ]);
+}
+
+
+async function askLastMessage() {
+
+    await showTyping(1500);
+
+    addMessage(
+        "Ele escreveu apenas três palavras."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "Não confie nela."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Não confie nela",
+        "A última mensagem de Daniel dizia: 'Não confie nela'."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Nela quem?",
+            action: askWhoSheIs
+        },
+
+        {
+            text: "Você sabe quem é?",
+            action: askSuspect
+        }
+
+    ]);
+}
+
+
+async function askSavedMessage() {
+
+    await showTyping(1200);
+
+    addMessage(
+        "Eu apaguei."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "Mas nunca consegui esquecer o que estava escrito."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Mensagem apagada",
+        "A última mensagem de Daniel foi apagada, mas o desconhecido lembra do conteúdo."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "O que ela dizia?",
+            action: askLastMessage
+        },
+
+        {
+            text: "Por que apagou?",
+            action: askWhyDeleted
+        }
+
+    ]);
+}
+
+
+async function askSuspect() {
+
+    suspicion++;
+
+    await showTyping(1500);
+
+    addMessage(
+        "Helena."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "Mas isso não significa que ela fez alguma coisa."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Helena é uma suspeita",
+        "O nome de Helena aparece novamente como possível ligação com o desaparecimento."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Então quem é ela?",
+            action: askWhoSheIs
+        },
+
+        {
+            text: "Você está protegendo Helena?",
+            action: accuseProtecting
+        }
+
+    ]);
+}
+
+
+async function askWhyMe() {
+
+    await showTyping(1500);
+
+    addMessage(
+        "Porque você recebeu a caixa."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "E porque acho que alguém queria que você encontrasse ela."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Você foi escolhido",
+        "O desconhecido acredita que alguém fez questão de colocar a caixa no seu caminho."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Quem colocou a caixa?",
+            action: askWhoPlaced
+        },
+
+        {
+            text: "Você colocou?",
+            action: askIfHePlaced
+        }
+
+    ]);
+}
+
+
+async function askRecording() {
+
+    await showTyping(1500);
+
+    addMessage(
+        "Uma pessoa entrando na estação."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "Ela carregava uma caixa azul."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "A caixa aparece na gravação",
+        "A gravação mostra uma pessoa entrando na estação carregando uma caixa azul."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Era Helena?",
+            action: askIfHelenaRecording
+        },
+
+        {
+            text: "Você reconheceu a pessoa?",
+            action: askRecognizedPerson
+        }
+
+    ]);
+}
+
+
+async function askRecordingLocation() {
+
+    await showTyping(1300);
+
+    addMessage(
+        "Na estação."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "Mas a gravação original desapareceu."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Gravação desaparecida",
+        "A gravação original não está mais disponível."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Quem apagou?",
+            action: askWhoDeleted
+        },
+
+        {
+            text: "Você tem uma cópia?",
+            action: askCopy
+        }
+
+    ]);
+}
+
+async function askInitials() {
+
+    await showTyping(1200);
+
+    addMessage(
+        "K.R."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Não sei o que significa."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Iniciais K.R.",
+        "As letras K.R. estão gravadas na moeda encontrada dentro da caixa."
+    );
+
+    discoveredInitials = true;
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Você sabe de quem são essas iniciais.",
+            action: accuseInitials
+        },
+
+        {
+            text: "Vou descobrir sozinho.",
+            action: searchSymbol
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   ABRIR A CAIXA
+===================================================== */
+
+async function openBox() {
+
+    boxConfirmed = true;
+
+    await showTyping(1500);
+
+    addMessage(
+        "Você abriu?"
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "Então olhe primeiro para a fotografia."
+    );
+
+    advanceTime(1);
+
+    await sleep(900);
+
+    unlockPhoto();
+
+    addClue(
+        "A fotografia",
+        "A fotografia mostra uma estação de trem durante a noite."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Quem é a pessoa na fotografia?",
+            action: askPhotoPerson
+        },
+
+        {
+            text: "Por que essa fotografia foi enviada para mim?",
+            action: askWhyPhoto
+        },
+
+        {
+            text: "Vou olhar a moeda.",
+            action: inspectCoin
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   FOTO — PESSOA
+===================================================== */
+
+async function askPhotoPerson() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Eu esperava que você soubesse."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "Mas agora percebi que talvez você nunca tenha visto essa pessoa."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Pessoa desconhecida",
+        "A pessoa que aparece na fotografia ainda não foi identificada."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Você sabe quem ela é?",
+            action: askWhoPhotoPerson
+        },
+
+        {
+            text: "Ela estava na estação naquela noite?",
+            action: askStationNight
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   QUEM É A PESSOA DA FOTO
+===================================================== */
+
+async function askWhoPhotoPerson() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Talvez."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Eu tenho uma suspeita."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Mas não quero acusar alguém sem ter certeza."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Uma suspeita",
+        "O desconhecido acredita reconhecer a pessoa da fotografia, mas ainda não tem certeza."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Me diga quem você suspeita.",
+            action: askSuspect
+        },
+
+        {
+            text: "Então vamos descobrir juntos.",
+            action: continueInvestigation
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   FOTO — ESTAÇÃO
+===================================================== */
+
+async function askStationNight() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Sim."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "A fotografia foi tirada na noite em que Helena desapareceu."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Fotografia da noite do desaparecimento",
+        "A fotografia parece ter sido tirada na mesma noite em que Helena desapareceu."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Que horas eram?",
+            action: askPhotoTime
+        },
+
+        {
+            text: "Quem tirou a fotografia?",
+            action: askWhoTookPhoto
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   HORÁRIO DA FOTO
+===================================================== */
+
+async function askPhotoTime() {
+
+    await showTyping(1200);
+
+    addMessage(
+        "22:18."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Foi exatamente às 22:18."
+    );
+
+    advanceTime(1);
+
+    discoveredDate = true;
+
+    addClue(
+        "22:18",
+        "A fotografia foi registrada às 22:18."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "O que aconteceu às 22:18?",
+            action: askWhatHappenedAtTime
+        },
+
+        {
+            text: "Essa hora significa alguma coisa?",
+            action: askMeaningTime
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   QUEM TIROU A FOTO
+===================================================== */
+
+async function askWhoTookPhoto() {
+
+    await showTyping(1300);
+
+    addMessage(
+        "Não sei."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Mas definitivamente não foi uma fotografia acidental."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Fotografia intencional",
+        "A fotografia parece ter sido tirada de propósito."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Então alguém estava seguindo aquela pessoa?",
+            action: askFollowing
+        },
+
+        {
+            text: "Você tem certeza?",
+            action: askPhotoProof
+
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   MOEDA
+===================================================== */
+
+async function inspectCoin() {
+
+    await showTyping(1100);
+
+    addMessage(
+        "A moeda é mais importante do que parece."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Olhe o verso."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Tem uma pequena marca."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Marca na moeda",
+        "Além das iniciais K.R., a moeda possui uma pequena marca no verso."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Que marca?",
+            action: askCoinMark
+        },
+
+        {
+            text: "Onde essa moeda foi feita?",
+            action: askCoinOrigin
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   MARCA DA MOEDA
+===================================================== */
+
+async function askCoinMark() {
+
+    await showTyping(1300);
+
+    addMessage(
+        "Um pequeno triângulo."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Com uma linha atravessando o meio."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Triângulo na moeda",
+        "A moeda possui um símbolo de triângulo atravessado por uma linha."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Você já viu esse símbolo antes?",
+            action: askSeenSymbol
+        },
+
+        {
+            text: "Ele pertence a alguém?",
+            action: askSymbolOwner
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   ORIGEM DA MOEDA
+===================================================== */
+
+async function askCoinOrigin() {
+
+    await showTyping(1300);
+
+    addMessage(
+        "Não é uma moeda comum."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Ela foi feita para um grupo específico."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Moeda incomum",
+        "A moeda não parece ter sido produzida para circulação comum."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Que grupo?",
+            action: askGroup
+        },
+
+        {
+            text: "Você já viu outra igual?",
+            action: askOtherCoin
+
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   SÍMBOLO
+===================================================== */
+
+async function askSeenSymbol() {
+
+    await showTyping(1300);
+
+    addMessage(
+        "Sim."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Na estação."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "O símbolo também está na estação",
+        "O mesmo triângulo aparece em algum lugar dentro da estação."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Onde?",
+            action: askSymbolLocation
+        },
+
+        {
+            text: "Então precisamos voltar para lá.",
+            action: askPlatform
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   DONO DO SÍMBOLO
+===================================================== */
+
+async function askSymbolOwner() {
+
+    await showTyping(1300);
+
+    addMessage(
+        "É isso que estou tentando descobrir."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "E acho que Daniel chegou muito perto da resposta."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Daniel investigava o símbolo",
+        "Daniel aparentemente estava tentando descobrir quem utilizava o símbolo."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "O que Daniel descobriu?",
+            action: askWhatDanielFound
+        },
+
+        {
+            text: "Por que ninguém me contou isso antes?",
+            action: askWhyNobodyTold
+
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   GRUPO
+===================================================== */
+
+async function askGroup() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Ainda não posso dizer."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Mas eles usavam a estação como ponto de encontro."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Ponto de encontro",
+        "Um grupo desconhecido utilizava a estação como ponto de encontro."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Esse grupo ainda existe?",
+            action: askIfGroupExists
+        },
+
+        {
+            text: "Helena fazia parte dele?",
+            action: askHelenaGroup
+
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   OUTRA MOEDA
+===================================================== */
+
+async function askOtherCoin() {
+
+    await showTyping(1200);
+
+    addMessage(
+        "Uma vez."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "E foi exatamente por isso que eu reconheci essa."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Outra moeda",
+        "O desconhecido já viu uma moeda semelhante anteriormente."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Onde você viu a outra?",
+            action: askOtherCoinLocation
+        },
+
+        {
+            text: "Quem tinha essa moeda?",
+            action: askOtherCoinOwner
+
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   LOCAL DO SÍMBOLO
+===================================================== */
+
+async function askSymbolLocation() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Na parede perto da plataforma 4."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "É pequeno. Quase ninguém percebe."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Símbolo na plataforma 4",
+        "O mesmo símbolo da moeda está escondido na parede próxima à plataforma 4."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Então a plataforma 4 é importante.",
+            action: askPlatform
+        },
+
+        {
+            text: "O que existe atrás daquela parede?",
+            action: askBehindWall
+
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   POR QUE NINGUÉM CONTOU
+===================================================== */
+
+async function askWhyNobodyTold() {
+
+    await showTyping(1300);
+
+    addMessage(
+        "Porque ninguém sabia em quem confiar."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Agora você entende por que eu pedi para não contar a ninguém."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Ninguém sabia em quem confiar",
+        "O desconhecido acredita que existe alguém dentro do círculo de pessoas envolvidas que não é confiável."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Você confia em mim?",
+            action: askTrust
+        },
+
+        {
+            text: "Então eu também não vou confiar em você.",
+            action: challengeTrust
+
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   GRUPO AINDA EXISTE
+===================================================== */
+
+async function askIfGroupExists() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Eu não sei."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Mas alguém continua usando o símbolo."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "O símbolo ainda é usado",
+        "Mesmo que o grupo não esteja mais ativo, alguém continua usando seu símbolo."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Então alguém está ativo agora.",
+            action: askActivePerson
+        },
+
+        {
+            text: "Isso está ficando perigoso.",
+            action: reactFear
+
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   HELENA E O GRUPO
+===================================================== */
+
+async function askHelenaGroup() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Eu não tenho certeza."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Mas ela conhecia o símbolo."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Helena conhecia o símbolo",
+        "Helena aparentemente conhecia o significado do símbolo da moeda."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Então ela sabia sobre o grupo.",
+            action: askWhatHelenaKnew
+        },
+
+        {
+            text: "Você está tentando protegê-la?",
+            action: accuseProtecting
+
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   OUTRA MOEDA — LOCAL
+===================================================== */
+
+async function askOtherCoinLocation() {
+
+    await showTyping(1300);
+
+    addMessage(
+        "Na mesma estação."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Foi há alguns anos."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "A moeda já apareceu antes",
+        "Uma moeda igual já havia sido encontrada na estação anos atrás."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Quem encontrou?",
+            action: askOtherCoinFinder
+        },
+
+        {
+            text: "Isso tem relação com Helena?",
+            action: askIfHelenaRelated
+
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   DONO DA OUTRA MOEDA
+===================================================== */
+
+async function askOtherCoinOwner() {
+
+    await showTyping(1300);
+
+    addMessage(
+        "Daniel."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Foi por isso que ele começou a investigar."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Daniel possuía uma moeda",
+        "Daniel já havia encontrado uma moeda igual antes."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Ele ainda tinha essa moeda?",
+            action: askIfDanielStillHad
+        },
+
+        {
+            text: "Então a moeda pode levar até Daniel.",
+            action: askPlatform
+
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   ATRÁS DA PAREDE
+===================================================== */
+
+async function askBehindWall() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Uma passagem antiga."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Foi fechada há muitos anos."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Passagem antiga",
+        "Existe uma passagem antiga próxima à plataforma 4."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Ela ainda pode ser aberta?",
+            action: askCanOpen
+        },
+
+        {
+            text: "Foi por ali que Helena desapareceu?",
+            action: askHelenaPassage
+
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   CONFIANÇA
+===================================================== */
+
+async function askTrust() {
+
+    await showTyping(1300);
+
+    trust++;
+
+    addMessage(
+        "Mais do que deveria."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "E isso pode acabar sendo um erro."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Confiança",
+        "O desconhecido afirma confiar em você, mas acredita que isso pode ser perigoso."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Então confie em mim e conte tudo.",
+            action: demandProof
+        },
+
+        {
+            text: "O que você ainda está escondendo?",
+            action: accuse
+
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   ATIVO AGORA
+===================================================== */
+
+async function askActivePerson() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Provavelmente."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "E é justamente essa pessoa que me preocupa."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Alguém continua ativo",
+        "O desconhecido acredita que uma pessoa ligada ao grupo continua agindo atualmente."
+    );
+
+    await sleep(900);
+
+    finishChapter();
+}
+
+
+/* =====================================================
+   O QUE HELENA SABIA
+===================================================== */
+
+async function askWhatHelenaKnew() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Ela sabia onde ficava a passagem."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "E sabia o que havia do outro lado."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Helena conhecia a passagem",
+        "Helena sabia da existência da passagem antiga próxima à plataforma 4."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "O que havia do outro lado?",
+            action: askOtherSide
+        },
+
+        {
+            text: "Daniel também sabia?",
+            action: askIfDanielKnewPassage
+
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   ACUSAR DE PROTEGER
+===================================================== */
+
+async function accuseProtecting() {
+
+    suspicion++;
+
+    await showTyping(1300);
+
+    addMessage(
+        "Eu não estou protegendo ninguém."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Estou tentando evitar que você cometa o mesmo erro que Daniel."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "O erro de Daniel",
+        "O desconhecido acredita que Daniel cometeu algum erro durante sua investigação."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Que erro?",
+            action: askDanielMistake
+        },
+
+        {
+            text: "Então me ensine o que não fazer.",
+            action: askWhatNotDo
+
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   PROVA DA FOTO
+===================================================== */
+
+async function askPhotoProof() {
+
+    await showTyping(1300);
+
+    addMessage(
+        "A fotografia prova que alguém estava na estação."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Mas não prova quem essa pessoa era."
+    );
+
+    advanceTime(1);
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Então precisamos de outra pista.",
+            action: continueInvestigation
+        },
+
+        {
+            text: "Existe alguma coisa escondida na foto?",
+            action: inspectBackground
+
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   PESSOA SEGUINDO
+===================================================== */
+
+async function askFollowing() {
+
+    await showTyping(1300);
+
+    addMessage(
+        "É possível."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "A distância entre a câmera e a pessoa era pequena."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "A pessoa estava sendo observada",
+        "A fotografia parece ter sido tirada de perto, indicando que alguém observava a pessoa."
+    );
+
+    await sleep(900);
+
+    finishChapter();
+}
+
+
+/* =====================================================
+   HORA — O QUE ACONTECEU
+===================================================== */
+
+async function askWhatHappenedAtTime() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Foi quando Helena entrou na estação."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Depois disso, ninguém conseguiu encontrá-la."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Helena entrou às 22:18",
+        "Helena foi vista entrando na estação às 22:18."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Quem estava esperando por ela?",
+            action: askWhoWaiting
+        },
+
+        {
+            text: "Ela estava sozinha?",
+            action: askIfAlone
+
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   SIGNIFICADO DO HORÁRIO
+===================================================== */
+
+async function askMeaningTime() {
+
+    await showTyping(1200);
+
+    addMessage(
+        "Sim."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "É o horário em que tudo começou."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "22:18 é importante",
+        "O horário 22:18 parece marcar o início dos acontecimentos."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "O que aconteceu exatamente?",
+            action: askWhatHappenedAtTime
+        },
+
+        {
+            text: "Vou anotar esse horário.",
+            action: saveTimeClue
+
+        }
+
+    ]);
+}
+
+
+/* =====================================================
+   FINAL DA PARTE
+===================================================== */
+
+async function saveTimeClue() {
+
+    addClue(
+        "Horário anotado",
+        "22:18 foi registrado como um dos horários mais importantes da investigação."
+    );
+
+    await showTyping(1000);
+
+    addMessage(
+        "Faça isso."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Você vai precisar lembrar desse horário."
+    );
+
+    advanceTime(1);
+
+    finishChapter();
+}
+
+    advanceTime(1);
+
+    addClue(
+        "Relação entre Daniel e Helena",
+        "Existe uma possibilidade de que Daniel e Helena tivessem uma relação além da amizade."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Então alguém tinha ciúmes?",
+            action: askJealousy
+        },
+
+        {
+            text: "Você acha que isso tem relação com o desaparecimento?",
+            action: askIfExplains
+        }
+
+    ]);
+
+}
+
+
+/* =====================================================
+   QUEM SABIA
+===================================================== */
+
+async function askWhoKnew() {
+
+    await showTyping(1500);
+
+    addMessage(
+        "Daniel."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "E talvez outra pessoa."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Daniel sabia da caixa",
+        "Daniel pode ter sabido que a caixa seria entregue a você."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Quem é a outra pessoa?",
+            action: askOtherPerson
+        },
+
+        {
+            text: "Daniel deixou alguma pista?",
+            action: askDanielClue
+        }
+
+    ]);
+
+}
+
+
+/* =====================================================
+   SIGNIFICADO K.R.
+===================================================== */
+
+async function askInitialMeaning() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Eu acho que são iniciais."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "Mas não sei de quem."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "K.R. podem ser iniciais",
+        "As letras gravadas na moeda provavelmente representam o nome de alguém."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Pode ser alguém da história?",
+            action: askIfStoryPerson
+        },
+
+        {
+            text: "Vou procurar por K.R.",
+            action: searchSymbol
+        }
+
+    ]);
+
+}
+
+
+/* =====================================================
+   PRÓXIMO PASSO
+===================================================== */
+
+async function askWhatNow() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Não saia de casa."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "Pelo menos até eu descobrir quem está observando você."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Fique em casa",
+        "O desconhecido aconselha que você não saia de casa enquanto ele investiga quem está observando."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "E se eu não quiser esperar?",
+            action: refuseWait
+        },
+
+        {
+            text: "Tudo bem. Vou esperar.",
+            action: agreeWait
+        }
+
+    ]);
+
+}
+
+
+/* =====================================================
+   FINALIZAÇÃO DO CAPÍTULO
+===================================================== */
+
+async function continueChapter() {
+
+    storyProgress++;
+
+    await showTyping(1500);
+
+    addMessage(
+        "Eu preciso desligar."
+    );
+
+    advanceTime(1);
+
+    await sleep(900);
+
+    addMessage(
+        "Se eu desaparecer, procure pela plataforma 4."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Plataforma 4",
+        "A plataforma 4 parece ser o próximo lugar importante da investigação."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "O que existe na plataforma 4?",
+            action: askPlatform
+        },
+
+        {
+            text: "Por que você pode desaparecer?",
+            action: askDisappear
+        }
+
+    ]);
+
+}
+
+
+/* =====================================================
+   AÇÕES FINAIS
+===================================================== */
+
+async function askPlatform() {
+
+    await showTyping(1500);
+
+    addMessage(
+        "É onde tudo começou."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "E talvez seja onde tudo termine."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "A plataforma 4",
+        "A plataforma 4 está diretamente ligada ao início do mistério."
+    );
+
+    await sleep(900);
+
+    finishChapter();
+
+}
+
+
+async function askDisappear() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Porque quem procura a verdade acaba chamando atenção."
+    );
+
+    advanceTime(1);
+
+    await sleep(900);
+
+    addMessage(
+        "E agora você também está procurando."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Você está envolvido",
+        "Ao continuar investigando, você também pode ter chamado a atenção de quem está por trás de tudo."
+    );
+
+    await sleep(900);
+
+    finishChapter();
+
+}
+
+
+function finishChapter() {
+
+    gameScreen.classList.add(
+        "hidden"
+    );
+
+    endScreen.classList.remove(
+        "hidden"
+    );
+
+    endTitle.textContent =
+        "FIM DO CAPÍTULO 1";
+
+    endText.textContent =
+        "A conversa terminou por enquanto.\n\n" +
+        "Mas agora você sabe que a caixa azul, " +
+        "Helena, Daniel e a plataforma 4 estão ligados.\n\n" +
+        "E alguém sabe que você descobriu.";
+
+}
+
+
+/* =====================================================
+   OUTRAS RESPOSTAS
+===================================================== */
+
+async function askHowKnows() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Porque alguém está acompanhando os seus passos."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "Não sei como."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Alguém acompanha seus passos",
+        "Existe alguém acompanhando o que você está fazendo."
+    );
+
+    await sleep(800);
+
+    showChoices([
+
+        {
+            text: "Isso é assustador.",
+            action: reactFear
+        },
+
+        {
+            text: "Vou descobrir quem é.",
+            action: investigateAlone
+        }
+
+    ]);
+
+}
+
+
+async function askWhoPlacedAgain() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Ainda não posso dizer."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "Mas as iniciais K.R. podem ajudar."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "K.R. podem revelar o responsável",
+        "As iniciais gravadas na moeda podem estar ligadas à pessoa que colocou a caixa."
+    );
+
+    await sleep(900);
+
+    showChoices([
+
+        {
+            text: "Então vou descobrir o significado.",
+            action: searchSymbol
+        },
+
+        {
+            text: "Você precisa confiar em mim.",
+            action: demandProof
+        }
+
+    ]);
+
+}
+
+
+async function askOtherPerson() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Uma pessoa que você já viu."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "Mas você ainda não percebeu."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Você já viu essa pessoa",
+        "A pessoa ligada à caixa pode ser alguém que você já encontrou antes."
+    );
+
+    await sleep(900);
+
+    finishChapter();
+
+}
+
+
+async function askDanielClue() {
+
+    await showTyping(1400);
+
+    addMessage(
+        "Ele deixou uma fotografia."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "A mesma fotografia que está dentro da sua caixa."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "A fotografia veio de Daniel",
+        "A fotografia encontrada na caixa pode ter sido deixada por Daniel."
+    );
+
+    await sleep(900);
+
+    finishChapter();
+
+}
+
+
+async function searchSymbol() {
+
+    await showTyping(1300);
+
+    addMessage(
+        "K.R."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "Talvez você já saiba o que isso significa."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "K.R.",
+        "As iniciais continuam sendo a principal pista sobre a identidade desconhecida."
+    );
+
+    await sleep(900);
+
+    finishChapter();
+
+}
+
+
+async function reactFear() {
+
+    await showTyping(1200);
+
+    addMessage(
+        "Eu sei."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "É por isso que estou tentando avisar você."
+    );
+
+    advanceTime(1);
+
+    finishChapter();
+
+}
+
+
+async function investigateAlone() {
+
+    suspicion++;
+
+    await showTyping(1300);
+
+    addMessage(
+        "Talvez seja melhor não fazer isso."
+    );
+
+    advanceTime(1);
+
+    await sleep(800);
+
+    addMessage(
+        "Mas a escolha é sua."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Investigar sozinho",
+        "Você decidiu seguir as pistas por conta própria."
+    );
+
+    await sleep(900);
+
+    finishChapter();
+
+}
+
+
+async function agreeWait() {
+
+    trust++;
+
+    await showTyping(1200);
+
+    addMessage(
+        "Obrigado."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Eu volto a falar com você."
+    );
+
+    advanceTime(1);
+
+    finishChapter();
+
+}
+
+
+async function refuseWait() {
+
+    courage++;
+
+    await showTyping(1200);
+
+    addMessage(
+        "Então tome cuidado."
+    );
+
+    advanceTime(1);
+
+    await sleep(700);
+
+    addMessage(
+        "Não vá até a estação sozinho."
+    );
+
+    advanceTime(1);
+
+    addClue(
+        "Não vá sozinho",
+        "O desconhecido insiste que a estação pode ser perigosa."
+    );
+
+    await sleep(900);
+
+    finishChapter();
+
+}
+
+
+/* =====================================================
+   BOTÕES PRINCIPAIS
+===================================================== */
+
+startButton.addEventListener(
+    "click",
+    startGame
+);
+
+
+restartButton.addEventListener(
+    "click",
+    () => {
+
+        location.reload();
+
+    }
+);
+
+
+/* =====================================================
+   INICIALIZAÇÃO
+===================================================== */
+
+updateClock();
+
+
+setInterval(
+    updateClock,
+    30000
+);3
